@@ -263,8 +263,11 @@ export enum ActionType {
     COMPLETE
 };
 
+export type ActionId = number;
+
 export interface Action {
     type: ActionType;
+    id: ActionId;
 }
 
 export interface CreateAction extends Action {
@@ -275,8 +278,7 @@ export interface CreateAction extends Action {
     dueAt: Time;
 }
 
-export interface SpltAction extends Action {
+export interface SplitAction extends Action {
     type: ActionType.SPLIT;
-    id: ActionId;
     count: number;
 }

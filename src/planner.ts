@@ -1,45 +1,294 @@
+import { create } from "domain";
 
-type Id = number;
+//
+// Constants
+//
+
+const MINUTES = 60;             // Seconds per minute.
+const HOURS = MINUTES * 60;     // Seconds per hour.
+
+
+
+
 type LocationId = number;
+const NO_LOCATION: LocationId = 0;
+const BREAK_ROOM: LocationId = 1;
+
 type SimTime = number;
+const MIN_SIM_TIME: SimTime = 0;
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Carts
+//
+///////////////////////////////////////////////////////////////////////////////
+
 type CartId = number;
-
-interface Job {
-    id: Id;
-    quantity: number;
-    origin: LocationId;
-    destination: LocationId;
-    deadline: SimTime
-}
-
-// DESIGN NOTES
-/*
-Need some way to constrain new plan proposals to satisfy in-progress plan elements.
-For example, if a plan involves jobs a, b, and c, and job a has already been picked
-up, new plans should contain job a.
-
-Need some way to constrain new plan proposals to satisfy constraints like planned
-out-of-service times.
-
-Need some way to track progress of jobs.
-    Before origin
-    Between origin and destination
-    Complete
-*/
 
 interface Cart {
     id: CartId;
+
+    // Cart capacity could be number of boxes/containers, tons, gallons, etc.
     capacity: number;
-    loaded: number;
+
+    // Amount of capacity currenty in use.
+    payload: number;
     lastKnownLocation: LocationId;
+
+    // DESIGN NOTE: information about jobs currently assigned to a cart is
+    // encoded in the Job data structure. Don't want to duplicate this
+    // information here to avoid inconsistencies.
+    // ISSUE: Cart payload could still be inconsistent with current jobs.
+    // We could infer the payload from the jobs. Not sure where this
+    // information should reside. There is an argument for not storing the
+    // payload quantity with the cart, and that is that we don't anticipate
+    // a way to measure this quantity.
+    //
+    // Could measure the location with GPS tracker.
+    // Could measure the payload with RFID, or on/off scans.
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Jobs
+//
+///////////////////////////////////////////////////////////////////////////////
+
+type JobId = number;
+
+enum JobType {
+    OUT_OF_SERVICE,
+    TRANSFER
+}
+
+interface Job {
+    id: JobId;
+    type: JobType;
+
+    assignedTo: CartId | null;
+}
+
+// The OutOfServiceJob is mandatory and the scheduler treats it as a
+// constraint. A valid plan must incorporate sufficient transit time
+// to reach the suspendLocation before the suspendTime. Subsequent
+// will not be processed until the resumeTime.
+//
+// DESIGN NOTE: Modelling out-of-service as a job, instead of a cart
+// characteristic in order to easily model brief out-of-service periods like
+// refueling. We want the planner to be able to anticipate carts resuming
+// service.
+interface OutOfServiceJob extends Job {
+    type: JobType.OUT_OF_SERVICE;
+
+    suspendLocation: LocationId;
+    suspendTime: SimTime;
+    resumeTime: SimTime;
+}
+
+enum TransferJobState {
+    BEFORE_PICKUP,
+    ENROUTE,
+    COMPLETE            // Is this state even needed?
+}
+
+// A valid plan must satisfy the following conditions:
+//   1. Pickup not before pickupAfter time.
+//   2. Sufficient time to load, travel to dropoffLocation, and unload before
+//      dropoffBefore time.
+//   3. Cart capacity not exceeded.
+interface TransferJob extends Job {
+    type: JobType.TRANSFER;
+
+    state: TransferJobState;
+
+    quantity: number;
+
+    // ISSUE: should we specify intervals for pickup and dropoff?
+    pickupLocation: LocationId;
+    pickupAfter: SimTime;
+
+    dropoffLocation: LocationId;
+    dropoffBefore: SimTime;
+}
+
+type AnyJob = OutOfServiceJob | TransferJob;
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Jobs
+//
+///////////////////////////////////////////////////////////////////////////////
+
+enum ActionType {
+    PICKUP,
+    DROPOFF
+}
+
+interface Action {
+    job: AnyJob;
+    type: ActionType;
+    location: LocationId;
+    time: SimTime;
+    quantity: number;
 }
 
 interface Plan {
-    cart: CartId;           // Should this be a reference to Cart?
-    route: LocationId[];
-    jobs: Job[];
+    cart: Cart;
+    actions: Action[];
     score: number;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// RoutePlanner
+//
+///////////////////////////////////////////////////////////////////////////////
+
+// Returns the estimated time to travel from origin to destination, starting
+// at startTime. Implementations could use a static table of historical travel
+// times, or a more complex model that considers factors like current and
+// anticipated congestion.
+type TransitTimeEstimator = (origin: LocationId, destination: LocationId, startTime: SimTime) => SimTime;
+type LoadTimeEstimator = (location: LocationId, quantity: number, startTime: SimTime) => SimTime;
+type UnloadTimeEstimator = (location: LocationId, quantity: number, startTime: SimTime) => SimTime;
+
+class RoutePlanner {
+    loadTimeEstimator: LoadTimeEstimator;
+    unloadTimeEstimator: UnloadTimeEstimator;
+    transitTimeEsitmator: TransitTimeEstimator;
+
+    constructor(
+        loadTimeEstimator: LoadTimeEstimator,
+        unloadTimeEstimator: UnloadTimeEstimator,
+        transitTimeEstimator: TransitTimeEstimator
+    ) {
+        this.loadTimeEstimator = loadTimeEstimator;
+        this.unloadTimeEstimator = unloadTimeEstimator;
+        this.transitTimeEsitmator = transitTimeEstimator;
+
+        // Initialize permutation tables.
+    }
+
+    // Gets the highest scoring plan for a set of jobs.
+    getBestPlan(cart: Cart, jobs: AnyJob[], time: SimTime): Plan | null {
+        let maxScore = 0;
+        let bestPlan: Plan | null = null;
+
+        for (const plan of this.enumerateValidPlans(cart, jobs, time)){
+            if (plan.score > maxScore) {
+                maxScore = plan.score;
+                bestPlan = plan;
+            }
+        }
+
+        return bestPlan;
+    }
+    
+    *enumerateValidPlans(cart: Cart, jobs: AnyJob[], time: SimTime): IterableIterator<Plan> {
+        for (const plan of this.enumerateAllPlans(cart, jobs, time)) {
+            if (this.validateAndScore(plan, time)) {
+                yield plan;
+            }
+        }
+    }
+    
+    *enumerateAllPlans(cart: Cart, jobs: AnyJob[], time: SimTime): IterableIterator<Plan> {
+        const actions: Action[] = [];
+        for (const job of jobs) {
+            if (job.assignedTo && job.assignedTo !== cart.id) {
+                // This is an error.
+            }
+
+            switch (job.type) {
+                case JobType.OUT_OF_SERVICE:
+                    break;
+                case JobType.TRANSFER:
+                    break;
+                default:
+                    ;
+            }
+
+            // Use patterns of nulls in action array to determine correct permutation table.
+        }
+    }
+
+    // Determines whether a plan satisfies the following constraints:
+    //   1. Cart capacity is never exceeded.
+    //   2. Dropoffs are before deadlines.
+    // Assumes that plans never specify a job's dropoff before its pickup.
+    // The enumerateAllPlans() generator only generates plans that meet this
+    // criteria.
+    //
+    // NOTE that a plan with score zero may still be valid. An example would be
+    // a plan that consists solely of an out-of-service interval.
+    validateAndScore(plan: Plan, startTime: SimTime): boolean {
+        let time = startTime;
+        let location = plan.cart.lastKnownLocation;
+        let payload = plan.cart.payload;
+        let quantityTransferred = 0;
+
+        for (const action of plan.actions) {
+            time += this.transitTimeEsitmator(location, action.location, time);
+
+            if (action.type === ActionType.DROPOFF) {
+                time += this.unloadTimeEstimator(action.location, action.quantity, time);
+                if (time > action.time) {
+                    // This plan is invalid because it unloads after the deadline.
+                    plan.score = 0;
+                    return false;
+                }
+                payload -= action.quantity;
+                quantityTransferred += action.quantity;
+
+                if (payload < 0) {
+                    // This should never happen. Log and throw.
+                    const message = `Cart ${plan.cart.id} has negative payload.`;
+                    throw TypeError(message);
+                }
+            }
+            else if (action.type === ActionType.PICKUP) {
+                if (action.time > time) {
+                    // Wait until load is available for pickup.
+                    time = action.time;
+
+                    time += this.loadTimeEstimator(action.location, action.quantity, time);
+                    payload += action.quantity;
+
+                    if (payload > plan.cart.capacity) {
+                        // This plan is invalid because its payload exceeds cart capacity.
+                        plan.score = 0;
+                        return false;
+                    }
+                }
+            }
+            else {
+                // Should never get here. Log and throw.
+                const message = `Unknown action type ${action.type}`;
+                throw TypeError(message);
+            }
+        }
+
+        // This plan does not violate any constraints.
+
+        // Score the plan.
+        // This score represents average amount transferred per unit time.
+        // It does not bias towards loads that are closer to their deadlines.
+        // It does not directly consider cart utilization (although this is
+        // correlated with transfer rate).
+
+        // NOTE: the scoring here is for the quality of the routing, not
+        // the value of the plan itself. Therefore, the criteria should
+        // probably be minimizing elapsed time (or elasped time doing work vs
+        // travelling out of service).
+        const elapsedTime = time - startTime;
+        plan.score = quantityTransferred / elapsedTime;
+
+        return true;
+    }
+}
+
 
 /*
 Proposed algorithm
@@ -69,3 +318,59 @@ for each assigned plan in order of decreasing elapsed time
 
 */
 
+
+// 
+// DESIGN NOTES
+/*
+Need some way to constrain new plan proposals to satisfy in-progress plan elements.
+For example, if a plan involves jobs a, b, and c, and job a has already been picked
+up, new plans should contain job a.
+
+Need some way to constrain new plan proposals to satisfy constraints like planned
+out-of-service times.
+
+Need some way to track progress of jobs.
+    Before origin
+    Between origin and destination
+    Complete
+*/
+
+
+
+
+/*
+// On modeling out-of-service time
+
+// Each cart has an in-service interval and an out-of-service location.
+// Jobs can be specified during the in-service interval.
+// Legal assignments must allow transit time to out-of-service location.
+// */
+// const outOfService: Job = {
+//     id: 1234,
+
+//     state: TransferJobState.ENROUTE,
+//     assignedTo: 123,
+
+//     quantity: 0,
+
+//     pickupLocation: NO_LOCATION,
+//     pickupAfter: MIN_SIM_TIME,
+
+//     dropoffLocation: BREAK_ROOM,
+//     dropoffBefore: 17 * HOURS
+// }
+
+// const enteringService: Job = {
+//     id: 1235,
+
+//     state: TransferJobState.ENROUTE,
+//     assignedTo: 123,
+
+//     quantity: 0,
+
+//     pickupLocation: NO_LOCATION,
+//     pickupAfter: MIN_SIM_TIME,
+
+//     dropoffLocation: BREAK_ROOM,
+//     dropoffBefore: 17 * HOURS
+// }
