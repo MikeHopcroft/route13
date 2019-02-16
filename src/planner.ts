@@ -1,4 +1,19 @@
 import { create } from "domain";
+import { triggerAsyncId } from "async_hooks";
+
+/* TODO
+
+Rethink out-of-service model.
+Permutation table generation and testing.
+Plan enumeration.
+
+Job tuple enumeration.
+Priority queue.
+Conflicting job elimination.
+
+Simple simulator.
+
+*/
 
 //
 // Constants
@@ -11,11 +26,11 @@ const HOURS = MINUTES * 60;     // Seconds per hour.
 
 
 type LocationId = number;
-const NO_LOCATION: LocationId = 0;
-const BREAK_ROOM: LocationId = 1;
+// const NO_LOCATION: LocationId = 0;
+// const BREAK_ROOM: LocationId = 1;
 
 type SimTime = number;
-const MIN_SIM_TIME: SimTime = 0;
+// const MIN_SIM_TIME: SimTime = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -78,8 +93,16 @@ interface Job {
 // characteristic in order to easily model brief out-of-service periods like
 // refueling. We want the planner to be able to anticipate carts resuming
 // service.
+
+enum OutOfServiceJobState {
+    BEFORE_BREAK,
+    ON_BREAK
+}
+
 interface OutOfServiceJob extends Job {
     type: JobType.OUT_OF_SERVICE;
+
+    state: OutOfServiceJobState;
 
     suspendLocation: LocationId;
     suspendTime: SimTime;
@@ -88,8 +111,7 @@ interface OutOfServiceJob extends Job {
 
 enum TransferJobState {
     BEFORE_PICKUP,
-    ENROUTE,
-    COMPLETE            // Is this state even needed?
+    ENROUTE
 }
 
 // A valid plan must satisfy the following conditions:
@@ -176,7 +198,7 @@ class RoutePlanner {
         let maxScore = 0;
         let bestPlan: Plan | null = null;
 
-        for (const plan of this.enumerateValidPlans(cart, jobs, time)){
+        for (const plan of this.enumerateValidPlans(cart, jobs, time)) {
             if (plan.score > maxScore) {
                 maxScore = plan.score;
                 bestPlan = plan;
@@ -185,7 +207,7 @@ class RoutePlanner {
 
         return bestPlan;
     }
-    
+
     *enumerateValidPlans(cart: Cart, jobs: AnyJob[], time: SimTime): IterableIterator<Plan> {
         for (const plan of this.enumerateAllPlans(cart, jobs, time)) {
             if (this.validateAndScore(plan, time)) {
@@ -193,24 +215,74 @@ class RoutePlanner {
             }
         }
     }
-    
+
     *enumerateAllPlans(cart: Cart, jobs: AnyJob[], time: SimTime): IterableIterator<Plan> {
-        const actions: Action[] = [];
+        if (jobs.length >3) {
+            const message = `Too many jobs for cart ${cart.id}`;
+            throw TypeError(message);
+        }
+
+        // Form array of actions associated with jobs.
+        const actions: (Action | null)[] = [];
         for (const job of jobs) {
             if (job.assignedTo && job.assignedTo !== cart.id) {
-                // This is an error.
+                const message = `Job ${job.id} not assigned to cart ${cart.id}.`;
+                throw TypeError(message);
             }
 
             switch (job.type) {
                 case JobType.OUT_OF_SERVICE:
+                    if (job.state === OutOfServiceJobState.BEFORE_BREAK) {
+                        actions.push({
+                            job,
+                            type: ActionType.DROPOFF,
+                            location: job.suspendLocation,
+                            time: job.suspendTime,
+                            quantity: 0
+                        });
+                    }
+                    else {
+                        actions.push(null);
+                    }
+                    actions.push({
+                        job,
+                        type: ActionType.PICKUP,
+                        location: job.suspendLocation,
+                        time: job.resumeTime,
+                        quantity: 0
+                    });
+
                     break;
+
                 case JobType.TRANSFER:
+                    if (job.state === TransferJobState.BEFORE_PICKUP) {
+                        actions.push({
+                            job,
+                            type: ActionType.PICKUP,
+                            location: job.pickupLocation,
+                            time: job.pickupAfter,
+                            quantity: job.quantity
+                        });
+                    }
+                    else {
+                        actions.push(null);
+                    }
+                    actions.push({
+                        job,
+                        type: ActionType.DROPOFF,
+                        location: job.dropoffLocation,
+                        time: job.dropoffBefore,
+                        quantity: job.quantity
+                    });
+
                     break;
+
                 default:
                     ;
             }
 
-            // Use patterns of nulls in action array to determine correct permutation table.
+            // Use pattern of nulls in action array to determine correct
+            // permutation table.
         }
     }
 
@@ -282,12 +354,63 @@ class RoutePlanner {
         // the value of the plan itself. Therefore, the criteria should
         // probably be minimizing elapsed time (or elasped time doing work vs
         // travelling out of service).
+//        compileError;
         const elapsedTime = time - startTime;
         plan.score = quantityTransferred / elapsedTime;
 
         return true;
     }
 }
+
+interface TrieNode {
+    key: number;
+    children: Trie;
+}
+type Trie = Array<TrieNode>;
+
+let counter = 0;
+
+function buildTrie(head: number[], tail: number[]): Trie {
+    const children: Trie = [];
+
+    if (tail.length === 0) {
+        console.log(`${counter++}: ${head.join('')}`);
+    }
+
+    for (const [index, key] of tail.entries()) {
+        if (key % 2 == 0 || head.includes(key - 1)) {
+            const newHead = [...head, key];
+            const newTail = tail.filter(x => x !== key);
+            // console.log(`${counter++}: ${newHead.join('')}`);
+            children.push({
+                key,
+                children: buildTrie(newHead, newTail)
+            });
+        }
+    }
+    return children;
+}
+
+function walkTrie(trie: Trie, actions: (string|null)[], head: string[]) {
+    if (trie.length === 0) {
+        console.log(head.join(''));
+    }
+    for (const branch of trie) {
+        const action = actions[branch.key];
+        if (action) {
+            const newHead = [...head, action];
+            walkTrie(branch.children, actions, newHead);
+        }
+    }
+}
+
+// buildTrie([], [0, 1, 2, 3]);
+const trie = buildTrie([], [0, 1, 2, 3]);          // 89 permutations of three start-end pairs
+walkTrie(trie, ['a', null, 'c', 'd', 'e', 'f'], []);
+// buildTrie([], [0, 1, 2, 3, 4, 5, 6, 7]); // 2520 permutations of four start-end pairs.
+
+// CASE: planner can only look ahead 3 jobs, but there are 4 jobs that could all
+// be picked up at one location.
 
 
 /*
