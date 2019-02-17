@@ -1,11 +1,32 @@
-import { create } from "domain";
-import { triggerAsyncId } from "async_hooks";
-
 /* TODO
 
-Rethink out-of-service model.
-Permutation table generation and testing.
-Plan enumeration.
+Combine PlanState with newHead actions list
+Pull cart into PlanState (since it is copied as a parameter anyway)
+Make PlanState into a class and then add copy method
+
+x Suspend and Resume actions
+
+Unit test for permutations
+
+Difference between plan working time and plan score/value
+
+Score: payload transferred / working time
+    What if a large number of bags per minute ignores urgent bags?
+    IDEA: perhaps jobs specify urgency levels based on time remaining.
+    Want to maximize quantity of urgency transported per unit time.
+    Perhaps need to factor distance out of score. Just use distance as a constraint.
+        Two jobs that differ only by destination should have equal value
+        even if cost is different.
+    But the amount of resources consumed is important . . .
+
+Score: payload * time on board / time
+
+payload * time before deadline
+    What if 1 bag delivered months early override 40 bags delivered one minute before
+
+x Rethink out-of-service model.
+x Permutation table generation and testing.
+x Plan enumeration.
 
 Job tuple enumeration.
 Priority queue.
@@ -89,7 +110,7 @@ interface Job {
 // to reach the suspendLocation before the suspendTime. Subsequent
 // will not be processed until the resumeTime.
 //
-// DESIGN NOTE: Modelling out-of-service as a job, instead of a cart
+// DESIGN NOTE: Modeling out-of-service as a job, instead of a cart
 // characteristic in order to easily model brief out-of-service periods like
 // refueling. We want the planner to be able to anticipate carts resuming
 // service.
@@ -144,7 +165,9 @@ type AnyJob = OutOfServiceJob | TransferJob;
 
 enum ActionType {
     PICKUP,
-    DROPOFF
+    DROPOFF,
+    SUSPEND,
+    RESUME
 }
 
 interface Action {
@@ -161,6 +184,12 @@ interface Plan {
     score: number;
 }
 
+interface PlanState {
+    time: SimTime;
+    location: LocationId;
+    payload: number;
+    workingTime: SimTime;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -177,30 +206,36 @@ type LoadTimeEstimator = (location: LocationId, quantity: number, startTime: Sim
 type UnloadTimeEstimator = (location: LocationId, quantity: number, startTime: SimTime) => SimTime;
 
 class RoutePlanner {
+    maxJobs: number;
     loadTimeEstimator: LoadTimeEstimator;
     unloadTimeEstimator: UnloadTimeEstimator;
-    transitTimeEsitmator: TransitTimeEstimator;
+    transitTimeEstimator: TransitTimeEstimator;
+
+    permutations: Trie;
 
     constructor(
+        maxJobs: number,
         loadTimeEstimator: LoadTimeEstimator,
         unloadTimeEstimator: UnloadTimeEstimator,
         transitTimeEstimator: TransitTimeEstimator
     ) {
+        this.maxJobs = maxJobs;
         this.loadTimeEstimator = loadTimeEstimator;
         this.unloadTimeEstimator = unloadTimeEstimator;
-        this.transitTimeEsitmator = transitTimeEstimator;
+        this.transitTimeEstimator = transitTimeEstimator;
 
-        // Initialize permutation tables.
+        // Initialize trie of legal action permutations.
+        this.permutations = buildTrie([], [...Array(maxJobs * 2)]);
     }
 
     // Gets the highest scoring plan for a set of jobs.
-    getBestPlan(cart: Cart, jobs: AnyJob[], time: SimTime): Plan | null {
-        let maxScore = 0;
+    getBestRoute(cart: Cart, jobs: AnyJob[], time: SimTime): Plan | null {
+        let workingTime = Infinity;
         let bestPlan: Plan | null = null;
 
-        for (const plan of this.enumerateValidPlans(cart, jobs, time)) {
-            if (plan.score > maxScore) {
-                maxScore = plan.score;
+        for (const plan of this.validPlansFromJobs(cart, jobs, time)) {
+            if (plan.score < workingTime) {
+                workingTime = plan.score;
                 bestPlan = plan;
             }
         }
@@ -208,22 +243,125 @@ class RoutePlanner {
         return bestPlan;
     }
 
-    *enumerateValidPlans(cart: Cart, jobs: AnyJob[], time: SimTime): IterableIterator<Plan> {
-        for (const plan of this.enumerateAllPlans(cart, jobs, time)) {
-            if (this.validateAndScore(plan, time)) {
-                yield plan;
-            }
-        }
-    }
-
-    *enumerateAllPlans(cart: Cart, jobs: AnyJob[], time: SimTime): IterableIterator<Plan> {
-        if (jobs.length >3) {
+    private *validPlansFromJobs(cart: Cart, jobs: AnyJob[], time: SimTime): IterableIterator<Plan> {
+        if (jobs.length > this.maxJobs) {
             const message = `Too many jobs for cart ${cart.id}`;
             throw TypeError(message);
         }
 
-        // Form array of actions associated with jobs.
+        // Form array of actions associated with these jobs.
+        const actions = this.actionsFromJobs(cart, jobs);
+
+        const state = {
+            time,
+            location: cart.lastKnownLocation,
+            payload: cart.payload,
+            workingTime: 0
+        }
+        yield* this.validPlansFromActions(this.permutations, cart, state, actions, []);
+    }
+
+    private *validPlansFromActions(trie: Trie, cart: Cart, previousState: PlanState, actions: (Action | null)[], head: Action[]) {
+        let leafNode = true;
+        const state = { ...previousState };
+
+        for (const branch of trie) {
+            const action = actions[branch.key];
+            if (action) {
+                leafNode = false;
+                const newHead = [...head, action];
+
+                if (!this.applyAction(cart, state, action)) {
+                    return;
+                }
+
+                this.validPlansFromActions(branch.children, cart, state, actions, newHead);
+            }
+        }
+    
+        if (leafNode) {
+            // TODO: score and working time are different concepts
+            yield { cart, actions: head, score: state.workingTime };
+        }   
+    }
+
+    private applyAction(cart: Cart, state: PlanState, action: Action): boolean {
+        switch (action.type) {
+            case ActionType.DROPOFF: {
+                const startTime = state.time;
+                state.time += this.transitTimeEstimator(state.location, action.location, state.time);
+                state.time += this.unloadTimeEstimator(action.location, action.quantity, state.time);
+                if (state.time > action.time) {
+                    // This plan is invalid because it unloads after the deadline.
+                    return false;
+                }
+                state.payload -= action.quantity;
+
+                if (state.payload < 0) {
+                    // This should never happen. Log and throw.
+                    const message = `Bug: cart ${cart.id} has negative payload.`;
+                    throw TypeError(message);
+                }
+
+                state.workingTime += (state.time - startTime);
+
+                break;
+            }
+
+            case ActionType.PICKUP: {
+                const startTime = state.time;
+                state.time += this.transitTimeEstimator(state.location, action.location, state.time);
+                if (action.time > state.time) {
+                    // Wait until load is available for pickup.
+                    state.time = action.time;
+                }
+
+                state.time += this.loadTimeEstimator(action.location, action.quantity, state.time);
+                state.payload += action.quantity;
+
+                if (state.payload > cart.capacity) {
+                    // This plan is invalid because its payload exceeds cart capacity.
+                    return false;
+                }
+
+                state.workingTime += (state.time - startTime);
+
+                break;
+            }
+
+            case ActionType.SUSPEND: {
+                const transitTime = this.transitTimeEstimator(state.location, action.location, state.time);;
+                state.time += transitTime;
+                state.workingTime += transitTime;
+
+                if (state.time > action.time) {
+                    // This plan is invalid because it suspends after the deadline.
+                    return false;
+                }
+
+                break;
+            }
+
+            case ActionType.RESUME:
+                if (action.time > state.time) {
+                    // Wait until it is time to resume.
+                    state.time = action.time;
+                }
+                break;
+
+            default:
+                // Should never get here. Log and throw.
+                const message = `Unknown action type ${action.type}`;
+                throw TypeError(message);
+        }
+
+        // This plan was not shown to be invalid.
+        return true;
+    }
+
+    private actionsFromJobs(cart: Cart, jobs: AnyJob[]): (Action | null)[] {
         const actions: (Action | null)[] = [];
+
         for (const job of jobs) {
             if (job.assignedTo && job.assignedTo !== cart.id) {
                 const message = `Job ${job.id} not assigned to cart ${cart.id}.`;
@@ -235,7 +373,7 @@ class RoutePlanner {
                     if (job.state === OutOfServiceJobState.BEFORE_BREAK) {
                         actions.push({
                             job,
-                            type: ActionType.DROPOFF,
+                            type: ActionType.SUSPEND,
                             location: job.suspendLocation,
                             time: job.suspendTime,
                             quantity: 0
@@ -246,7 +384,7 @@ class RoutePlanner {
                     }
                     actions.push({
                         job,
-                        type: ActionType.PICKUP,
+                        type: ActionType.RESUME,
                         location: job.suspendLocation,
                         time: job.resumeTime,
                         quantity: 0
@@ -280,11 +418,12 @@ class RoutePlanner {
                 default:
                     ;
             }
-
-            // Use pattern of nulls in action array to determine correct
-            // permutation table.
         }
+        return actions;
     }
+
+
+
 
     // Determines whether a plan satisfies the following constraints:
     //   1. Cart capacity is never exceeded.
@@ -302,7 +441,7 @@ class RoutePlanner {
         let quantityTransferred = 0;
 
         for (const action of plan.actions) {
-            time += this.transitTimeEsitmator(location, action.location, time);
+            time += this.transitTimeEstimator(location, action.location, time);
 
             if (action.type === ActionType.DROPOFF) {
                 time += this.unloadTimeEstimator(action.location, action.quantity, time);
@@ -392,21 +531,26 @@ function buildTrie(head: number[], tail: number[]): Trie {
 }
 
 function walkTrie(trie: Trie, actions: (string|null)[], head: string[]) {
-    if (trie.length === 0) {
-        console.log(head.join(''));
-    }
+    let leafNode = true;
+
     for (const branch of trie) {
         const action = actions[branch.key];
         if (action) {
+            leafNode = false;
             const newHead = [...head, action];
             walkTrie(branch.children, actions, newHead);
         }
+    }
+
+    if (leafNode) {
+        console.log(head.join(''));
     }
 }
 
 // buildTrie([], [0, 1, 2, 3]);
 const trie = buildTrie([], [0, 1, 2, 3]);          // 89 permutations of three start-end pairs
-walkTrie(trie, ['a', null, 'c', 'd', 'e', 'f'], []);
+// walkTrie(trie, ['a', null, 'c', 'd', 'e', 'f'], []);
+walkTrie(trie, ['a', null, 'c', 'd', null, null], []);
 // buildTrie([], [0, 1, 2, 3, 4, 5, 6, 7]); // 2520 permutations of four start-end pairs.
 
 // CASE: planner can only look ahead 3 jobs, but there are 4 jobs that could all
