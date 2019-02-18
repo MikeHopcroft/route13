@@ -1,0 +1,47 @@
+{
+  "name": "airport",
+  "version": "0.0.1",
+  "description": "Airport baggage simulator",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MikeHopcroft/airport.git"
+  },
+  "author": "Michael Hopcroft",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MikeHopcroft/airport/issues"
+  },
+  "homepage": "https://github.com/MikeHopcroft/airport#readme",
+  "scripts": {
+    "test": "mocha",
+    "check": "gts check",
+    "clean": "gts clean",
+    "compile": "tsc -p .",
+    "fix": "gts fix",
+    "prepare": "npm run compile",
+    "pretest": "npm run compile",
+    "postcompile": "copyfiles \"samples/data/**/*.yaml\" build"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.6",
+    "@types/debug": "0.0.31",
+    "@types/dotenv": "^4.0.3",
+    "@types/jsonstream": "^0.8.30",
+    "@types/js-yaml": "^3.11.2",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.11.4",
+    "chai": "^4.2.0",
+    "copyfiles": "^2.1.0",
+    "gts": "^0.8.0",
+    "mocha": "^5.2.0",
+    "typescript": "~2.8.0"
+  },
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "debug": "^4.1.0",
+    "js-yaml": "^3.12.0",
+    "jsonstream": "^1.0.3",
+    "stream-replace": "^1.0.0"
+  }
+}
