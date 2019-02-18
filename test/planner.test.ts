@@ -1,7 +1,9 @@
 import { assert } from 'chai';
 import 'mocha';
 
-import { AnyJob, buildTrie, Cart, Job, JobType, LocationId, SimTime, RoutePlanner, TransferJob, TransferJobState } from '../src/planner/';
+import { RoutePlanner } from '../src/planner';
+import { Cart, LocationId, SimTime } from '../src/types';
+import { AnyJob, JobType, OutOfServiceJob, OutOfServiceJobState, TransferJob, TransferJobState } from '../src/types';
 
 function transitTimeEstimator(origin: LocationId, destination: LocationId, startTime: SimTime): SimTime {
     return Math.abs(destination - origin) * 100;

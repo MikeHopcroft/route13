@@ -1,163 +1,8 @@
-import { buildTrie, Trie, TrieNode } from './trie';
+import { buildTrie, Trie } from './trie';
+import { Cart, LocationId, SimTime } from '../types';
+import { AnyJob, JobType, OutOfServiceJobState, TransferJobState } from '../types';
+import { Action, ActionType, AnyAction, Plan, SuspendAction, TransferAction } from '../types';
 
-//
-// Constants
-//
-
-export const MINUTES = 60;             // Seconds per minute.
-export const HOURS = MINUTES * 60;     // Seconds per hour.
-
-
-
-
-export type LocationId = number;
-
-export type SimTime = number;
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// Carts
-//
-///////////////////////////////////////////////////////////////////////////////
-
-export type CartId = number;
-
-export interface Cart {
-    id: CartId;
-
-    // Cart capacity could be number of boxes/containers, tons, gallons, etc.
-    capacity: number;
-
-    // Amount of capacity currenty in use.
-    payload: number;
-    lastKnownLocation: LocationId;
-
-    // DESIGN NOTE: information about jobs currently assigned to a cart is
-    // encoded in the Job data structure. Don't want to duplicate this
-    // information here to avoid inconsistencies.
-    // ISSUE: Cart payload could still be inconsistent with current jobs.
-    // We could infer the payload from the jobs. Not sure where this
-    // information should reside. There is an argument for not storing the
-    // payload quantity with the cart, and that is that we don't anticipate
-    // a way to measure this quantity.
-    //
-    // Could measure the location with GPS tracker.
-    // Could measure the payload with RFID, or on/off scans.
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// Jobs
-//
-///////////////////////////////////////////////////////////////////////////////
-
-export type JobId = number;
-
-export enum JobType {
-    OUT_OF_SERVICE,
-    TRANSFER
-}
-
-export interface Job {
-    id: JobId;
-    type: JobType;
-
-    assignedTo: CartId | null;
-}
-
-// The OutOfServiceJob is mandatory and the scheduler treats it as a
-// constraint. A valid plan must incorporate sufficient transit time
-// to reach the suspendLocation before the suspendTime. Subsequent
-// will not be processed until the resumeTime.
-//
-// DESIGN NOTE: Modeling out-of-service as a job, instead of a cart
-// characteristic in order to easily model brief out-of-service periods like
-// refueling. We want the planner to be able to anticipate carts resuming
-// service.
-
-export enum OutOfServiceJobState {
-    BEFORE_BREAK,
-    ON_BREAK
-}
-
-export interface OutOfServiceJob extends Job {
-    type: JobType.OUT_OF_SERVICE;
-
-    state: OutOfServiceJobState;
-
-    suspendLocation: LocationId;
-    suspendTime: SimTime;
-    resumeTime: SimTime;
-}
-
-export enum TransferJobState {
-    BEFORE_PICKUP,
-    ENROUTE
-}
-
-// A valid plan must satisfy the following conditions:
-//   1. Pickup not before pickupAfter time.
-//   2. Sufficient time to load, travel to dropoffLocation, and unload before
-//      dropoffBefore time.
-//   3. Cart capacity not exceeded.
-export interface TransferJob extends Job {
-    type: JobType.TRANSFER;
-
-    state: TransferJobState;
-
-    quantity: number;
-
-    // ISSUE: should we specify intervals for pickup and dropoff?
-    pickupLocation: LocationId;
-    pickupAfter: SimTime;
-
-    dropoffLocation: LocationId;
-    dropoffBefore: SimTime;
-}
-
-export type AnyJob = OutOfServiceJob | TransferJob;
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// Plans and Actions
-//
-///////////////////////////////////////////////////////////////////////////////
-
-export enum ActionType {
-    PICKUP,
-    DROPOFF,
-    SUSPEND
-}
-
-export interface Action {
-    job: AnyJob;
-    type: ActionType;
-}
-
-export interface TransferAction extends Action {
-    job: TransferJob;
-    type: ActionType.DROPOFF | ActionType.PICKUP;
-    location: LocationId;
-    time: SimTime;
-    quantity: number;
-}
-
-export interface SuspendAction extends Action {
-    job: OutOfServiceJob;
-    type: ActionType.SUSPEND;
-    location: LocationId;
-    suspendTime: SimTime;
-    resumeTime: SimTime;
-}
-
-export type AnyAction = TransferAction | SuspendAction;
-
-export interface Plan {
-    cart: Cart;
-    actions: AnyAction[];
-    score: number;
-}
 
 interface PlanState {
     time: SimTime;
@@ -167,10 +12,6 @@ interface PlanState {
 }
 
 export type Logger = (message: string) => void;
-
-export function NopLogger(message: string) {
-    // This logger does nothing.
-}
 
 export function formatAction(action: AnyAction): string {
     let s = "Unknown action";
@@ -184,9 +25,6 @@ export function formatAction(action: AnyAction): string {
         case ActionType.SUSPEND:
             s = `suspend at location ${action.location} before ${action.suspendTime} until ${action.resumeTime}`;
             break;
-        // case ActionType.RESUME:
-        //     s = `resume from location ${action.location} at ${action.time}`;
-        //     break;
         default:
             break;
     }
