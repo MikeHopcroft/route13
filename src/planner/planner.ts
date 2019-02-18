@@ -165,21 +165,40 @@ export type AnyJob = OutOfServiceJob | TransferJob;
 export enum ActionType {
     PICKUP,
     DROPOFF,
-    SUSPEND,
-    RESUME
+    SUSPEND
+    // SUSPEND,
+    // RESUME
 }
 
 export interface Action {
     job: AnyJob;
     type: ActionType;
+    // location: LocationId;
+    // time: SimTime;
+    // quantity: number;
+}
+
+export interface TransferAction extends Action {
+    job: TransferJob;
+    type: ActionType.DROPOFF | ActionType.PICKUP;
     location: LocationId;
     time: SimTime;
     quantity: number;
 }
 
+export interface SuspendAction extends Action {
+    job: OutOfServiceJob;
+    type: ActionType.SUSPEND;
+    location: LocationId;
+    suspendTime: SimTime;
+    resumeTime: SimTime;
+}
+
+export type AnyAction = TransferAction | SuspendAction;
+
 export interface Plan {
     cart: Cart;
-    actions: Action[];
+    actions: AnyAction[];
     score: number;
 }
 
@@ -196,7 +215,7 @@ export function NopLogger(message: string) {
     // This logger does nothing.
 }
 
-export function formatAction(action: Action): string {
+export function formatAction(action: AnyAction): string {
     let s = "Unknown action";
     switch (action.type) {
         case ActionType.DROPOFF:
@@ -206,11 +225,11 @@ export function formatAction(action: Action): string {
             s = `pickup ${action.quantity} bags at gate ${action.location} after ${action.time}`;
             break;
         case ActionType.SUSPEND:
-            s = `suspend at location ${action.location} before ${action.time}`;
+            s = `suspend at location ${action.location} before ${action.suspendTime} until ${action.resumeTime}`;
             break;
-        case ActionType.RESUME:
-            s = `resume from location ${action.location} at ${action.time}`;
-            break;
+        // case ActionType.RESUME:
+        //     s = `resume from location ${action.location} at ${action.time}`;
+        //     break;
         default:
             break;
     }
@@ -277,8 +296,8 @@ export class RoutePlanner {
         let bestPlan: Plan | null = null;
 
         for (const plan of this.validPlansFromJobs(cart, jobs, time)) {
-            console.log('========================')
-            this.explainPlan(plan, time);
+            // console.log('========================')
+            // this.explainPlan(plan, time);
             if (plan.score < workingTime) {
                 workingTime = plan.score;
                 bestPlan = plan;
@@ -306,7 +325,7 @@ export class RoutePlanner {
         yield* this.validPlansFromActions(this.permutations, cart, state, actions, []);
     }
 
-    private *validPlansFromActions(trie: Trie, cart: Cart, previousState: PlanState, actions: (Action | null)[], head: Action[]): IterableIterator<Plan> {
+    private *validPlansFromActions(trie: Trie, cart: Cart, previousState: PlanState, actions: (AnyAction | null)[], head: AnyAction[]): IterableIterator<Plan> {
         let leafNode = true;
         // const state = { ...previousState };
 
@@ -317,12 +336,8 @@ export class RoutePlanner {
                 const newHead = [...head, action];
                 const state = { ...previousState };
 
-                // const logger = (msg: string) => {
-                //     console.log(msg);
-                // }
-
                 if (!this.applyAction(cart, state, action, NopLogger)) {
-                    console.log();
+                    console.log('=================');
                     console.log('Failed:');
                     const plan = { cart, actions: newHead, score: state.workingTime };
                     this.explainPlan(plan, previousState.time);
@@ -341,16 +356,18 @@ export class RoutePlanner {
         }   
     }
 
-    private applyAction(cart: Cart, state: PlanState, action: Action, logger: Logger ): boolean {
+    private applyAction(cart: Cart, state: PlanState, action: AnyAction, logger: Logger ): boolean {
         switch (action.type) {
             case ActionType.DROPOFF: {
-                logger(`DROPOFF ${action.quantity} bags at gate ${action.location} before ${action.time}`);
+                logger(`DROPOFF ${action.quantity} bags at gate ${action.location} before ${action.time} (job ${action.job.id})`);
                 const startTime = state.time;
 
-                const transitTime = this.transitTimeEstimator(state.location, action.location, state.time);
-                logger(`    ${state.time}: drive for ${transitTime}s to gate ${action.location}`);
-                state.time += transitTime;
-                state.location = action.location;
+                if (action.location !== state.location) {
+                    const transitTime = this.transitTimeEstimator(state.location, action.location, state.time);
+                    logger(`    ${state.time}: drive for ${transitTime}s to gate ${action.location}`);
+                    state.time += transitTime;
+                    state.location = action.location;
+                }
 
                 const unloadTime = this.unloadTimeEstimator(action.location, action.quantity, state.time);
                 logger(`    ${state.time}: unload ${action.quantity} bags in ${unloadTime}s.`);
@@ -375,13 +392,15 @@ export class RoutePlanner {
             }
 
             case ActionType.PICKUP: {
-                logger(`PICKUP ${action.quantity} bags at gate ${action.location} after ${action.time}`);
+                logger(`PICKUP ${action.quantity} bags at gate ${action.location} after ${action.time} (job ${action.job.id})`);
                 const startTime = state.time;
 
-                const transitTime = this.transitTimeEstimator(state.location, action.location, state.time);
-                logger(`    ${state.time}: drive for ${transitTime}s to gate ${action.location}`);
-                state.time += transitTime;
-                state.location = action.location;
+                if (action.location !== state.location) {
+                    const transitTime = this.transitTimeEstimator(state.location, action.location, state.time);
+                    logger(`    ${state.time}: drive for ${transitTime}s to gate ${action.location}`);
+                    state.time += transitTime;
+                    state.location = action.location;
+                }
 
                 if (action.time > state.time) {
                     // Wait until load is available for pickup.
@@ -397,7 +416,7 @@ export class RoutePlanner {
 
                 if (state.payload > cart.capacity) {
                     // This plan is invalid because its payload exceeds cart capacity.
-                    logger(`    ${state.time}: pickup capcity ${state.payload} exceeds capacity ${cart.capacity}`);
+                    logger(`    ${state.time}: payload of ${state.payload} exceeds capacity of ${cart.capacity}`);
                     return false;
                 }
 
@@ -407,40 +426,61 @@ export class RoutePlanner {
             }
 
             case ActionType.SUSPEND: {
-                logger(`SUSPEND at gate ${action.location} before ${action.time}`);
-                const transitTime = this.transitTimeEstimator(state.location, action.location, state.time);;
-                logger(`    ${state.time}: drive for ${transitTime}s to gate ${action.location}`);
-                state.time += transitTime;
-                state.workingTime += transitTime;
-                state.location = action.location;
+                logger(`SUSPEND at gate ${action.location} before ${action.suspendTime} until ${action.resumeTime} (job ${action.job.id})`);
 
-                if (state.time > action.time) {
+                if (action.location !== state.location) {
+                    const transitTime = this.transitTimeEstimator(state.location, action.location, state.time);;
+                    logger(`    ${state.time}: drive for ${transitTime}s to gate ${action.location}`);
+                    state.time += transitTime;
+                    state.workingTime += transitTime;
+                    state.location = action.location;
+                }
+
+                if (state.time > action.suspendTime) {
                     // This plan is invalid because it suspends after the deadline.
+                    logger(`    ${state.time}: suspends after deadline ${action.suspendTime}`);
                     return false;
                 }
+
+                // if (action.time > state.time) {
+                //     // Wait until it is time to resume.
+                //     const waitTime = action.time - state.time;
+                //     logger(`    ${state.time}: wait ${waitTime}s until ${action.time}`);
+
+                //     state.time = action.time;
+                // }
                 
                 logger(`    ${state.time}: suspend operations`);
+
+                if (state.time < action.resumeTime) {
+                    // Wait until it is time to resume.
+                    const waitTime = action.resumeTime - state.time;
+                    logger(`    ${state.time}: wait ${waitTime}s until ${action.resumeTime}`);
+                    state.time = action.resumeTime;                    
+                }
+
+                logger(`    ${state.time}: resume operations`);
                 
                 break;
             }
 
-            case ActionType.RESUME:
-                logger(`RESUME from gate ${action.location} at ${action.time}`);
-                if (action.time > state.time) {
-                    // Wait until it is time to resume.
-                    const waitTime = action.time - state.time;
-                    logger(`    ${state.time}: wait ${waitTime}s until ${action.time}`);
+            // case ActionType.RESUME:
+            //     logger(`RESUME from gate ${action.location} at ${action.time} (job ${action.job.id})`);
+            //     if (action.time > state.time) {
+            //         // Wait until it is time to resume.
+            //         const waitTime = action.time - state.time;
+            //         logger(`    ${state.time}: wait ${waitTime}s until ${action.time}`);
 
-                    state.time = action.time;
-                }
+            //         state.time = action.time;
+            //     }
 
-                logger(`    ${state.time}: resume operations`)
+            //     logger(`    ${state.time}: resume operations`)
 
-                break;
+            //     break;
 
             default:
                 // Should never get here. Log and throw.
-                const message = `Unknown action type ${action.type}`;
+                const message = `Unknown action type ${(action as Action).type}`;
                 throw TypeError(message);
         }
 
@@ -450,8 +490,8 @@ export class RoutePlanner {
         return true;
     }
 
-    private actionsFromJobs(cart: Cart, jobs: AnyJob[]): (Action | null)[] {
-        const actions: (Action | null)[] = [];
+    private actionsFromJobs(cart: Cart, jobs: AnyJob[]): (AnyAction | null)[] {
+        const actions: (AnyAction | null)[] = [];
 
         for (const job of jobs) {
             if (job.assignedTo && job.assignedTo !== cart.id) {
@@ -466,20 +506,21 @@ export class RoutePlanner {
                             job,
                             type: ActionType.SUSPEND,
                             location: job.suspendLocation,
-                            time: job.suspendTime,
-                            quantity: 0
-                        });
-                    }
-                    else {
+                            suspendTime: job.suspendTime,
+                            resumeTime: job.resumeTime
+                        } as SuspendAction);
                         actions.push(null);
                     }
-                    actions.push({
-                        job,
-                        type: ActionType.RESUME,
-                        location: job.suspendLocation,
-                        time: job.resumeTime,
-                        quantity: 0
-                    });
+                    // else {
+                    //     actions.push(null);
+                    // }
+                    // actions.push({
+                    //     job,
+                    //     type: ActionType.RESUME,
+                    //     location: job.suspendLocation,
+                    //     time: job.resumeTime,
+                    //     quantity: 0
+                    // });
 
                     break;
 
@@ -491,7 +532,7 @@ export class RoutePlanner {
                             location: job.pickupLocation,
                             time: job.pickupAfter,
                             quantity: job.quantity
-                        });
+                        } as TransferAction);
                     }
                     else {
                         actions.push(null);
@@ -502,7 +543,7 @@ export class RoutePlanner {
                         location: job.dropoffLocation,
                         time: job.dropoffBefore,
                         quantity: job.quantity
-                    });
+                    } as TransferAction);
 
                     break;
 
