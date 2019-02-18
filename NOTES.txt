@@ -1,0 +1,167 @@
+/* TODO
+
+FEATURE: Splitting large job into multiple smaller jobs.
+
+Combine PlanState with newHead actions list
+Pull cart into PlanState (since it is copied as a parameter anyway)
+Make PlanState into a class and then add copy method
+
+x Suspend and Resume actions
+
+Unit test for permutations
+
+Difference between plan working time and plan score/value
+
+Score: payload transferred / working time
+    What if a large number of bags per minute ignores urgent bags?
+    IDEA: perhaps jobs specify urgency levels based on time remaining.
+    Want to maximize quantity of urgency transported per unit time.
+    Perhaps need to factor distance out of score. Just use distance as a constraint.
+        Two jobs that differ only by destination should have equal value
+        even if cost is different.
+    But the amount of resources consumed is important . . .
+
+Score: payload * time on board / time
+
+payload * time before deadline
+    What if 1 bag delivered months early override 40 bags delivered one minute before
+
+x Rethink out-of-service model.
+x Permutation table generation and testing.
+x Plan enumeration.
+
+Job tuple enumeration.
+Priority queue.
+Conflicting job elimination.
+
+Simple simulator.
+
+*/
+
+/*
+Proposed algorithm
+
+for each cart
+    for each {a,b,c,..} subset of jobs
+        create plan(cart, [a,b,c])
+            for each permutation of destinations
+                exclude if capacity is exceeded
+                exclude if deadlines not fulfilled
+                find best scoring plan
+        add plan to priority queue
+        add plan to each job => plan list mapping
+
+// Greedy assign boulders
+while (some criteria)    // more carts to assign, value of remaining plans adequate
+    pull first plan from priority queue
+    assign plan to cart
+        this involves marking plamn's jobs as assigned
+        marking plan itself as assigned
+        removing all conflicting plans from consideration
+
+// Backfill with sand
+// Either pick carts and assign most valuable add-on job
+// or pick jobs and find best cart to assign
+for each assigned plan in order of decreasing elapsed time
+
+*/
+
+// 
+// DESIGN NOTES
+/*
+Need some way to constrain new plan proposals to satisfy in-progress plan elements.
+For example, if a plan involves jobs a, b, and c, and job a has already been picked
+up, new plans should contain job a.
+
+Need some way to constrain new plan proposals to satisfy constraints like planned
+out-of-service times.
+
+Need some way to track progress of jobs.
+    Before origin
+    Between origin and destination
+    Complete
+*/
+
+
+
+
+/*
+// On modeling out-of-service time
+
+// Each cart has an in-service interval and an out-of-service location.
+// Jobs can be specified during the in-service interval.
+// Legal assignments must allow transit time to out-of-service location.
+// */
+// const outOfService: Job = {
+//     id: 1234,
+
+//     state: TransferJobState.ENROUTE,
+//     assignedTo: 123,
+
+//     quantity: 0,
+
+//     pickupLocation: NO_LOCATION,
+//     pickupAfter: MIN_SIM_TIME,
+
+//     dropoffLocation: BREAK_ROOM,
+//     dropoffBefore: 17 * HOURS
+// }
+
+// const enteringService: Job = {
+//     id: 1235,
+
+//     state: TransferJobState.ENROUTE,
+//     assignedTo: 123,
+
+//     quantity: 0,
+
+//     pickupLocation: NO_LOCATION,
+//     pickupAfter: MIN_SIM_TIME,
+
+//     dropoffLocation: BREAK_ROOM,
+//     dropoffBefore: 17 * HOURS
+// }
+
+
+//     // Determines whether a plan satisfies the following constraints:
+//     //   1. Cart capacity is never exceeded.
+//     //   2. Dropoffs are before deadlines.
+//     // Assumes that plans never specify a job's dropoff before its pickup.
+//     // The enumerateAllPlans() generator only generates plans that meet this
+//     // criteria.
+//     //
+//     // NOTE that a plan with score zero may still be valid. An example would be
+//     // a plan that consists solely of an out-of-service interval.
+
+//         // Score the plan.
+//         // This score represents average amount transferred per unit time.
+//         // It does not bias towards loads that are closer to their deadlines.
+//         // It does not directly consider cart utilization (although this is
+//         // correlated with transfer rate).
+
+//         // NOTE: the scoring here is for the quality of the routing, not
+//         // the value of the plan itself. Therefore, the criteria should
+//         // probably be minimizing elapsed time (or elasped time doing work vs
+//         // travelling out of service).
+// //        compileError;
+//         const elapsedTime = time - startTime;
+//         plan.score = quantityTransferred / elapsedTime;
+
+//         return true;
+//     }
+}
+
+
+// const trie = buildTrie([], [0, 1, 2, 3]);          // 89 permutations of three start-end pairs
+// walkTrie(trie, ['a', null, 'c', 'd', null, null], []);
+
+// buildTrie([], [0, 1, 2, 3]);
+// walkTrie(trie, ['a', null, 'c', 'd', 'e', 'f'], []);
+// buildTrie([], [0, 1, 2, 3, 4, 5, 6, 7]); // 2520 permutations of four start-end pairs.
+
+// CASE: planner can only look ahead 3 jobs, but there are 4 jobs that could all
+// be picked up at one location.
+
+
+
+

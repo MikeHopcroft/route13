@@ -1,42 +1,4 @@
-/* TODO
-
-FEATURE: Splitting large job into multiple smaller jobs.
-
-Combine PlanState with newHead actions list
-Pull cart into PlanState (since it is copied as a parameter anyway)
-Make PlanState into a class and then add copy method
-
-x Suspend and Resume actions
-
-Unit test for permutations
-
-Difference between plan working time and plan score/value
-
-Score: payload transferred / working time
-    What if a large number of bags per minute ignores urgent bags?
-    IDEA: perhaps jobs specify urgency levels based on time remaining.
-    Want to maximize quantity of urgency transported per unit time.
-    Perhaps need to factor distance out of score. Just use distance as a constraint.
-        Two jobs that differ only by destination should have equal value
-        even if cost is different.
-    But the amount of resources consumed is important . . .
-
-Score: payload * time on board / time
-
-payload * time before deadline
-    What if 1 bag delivered months early override 40 bags delivered one minute before
-
-x Rethink out-of-service model.
-x Permutation table generation and testing.
-x Plan enumeration.
-
-Job tuple enumeration.
-Priority queue.
-Conflicting job elimination.
-
-Simple simulator.
-
-*/
+import { buildTrie, Trie, TrieNode } from './trie';
 
 //
 // Constants
@@ -166,16 +128,11 @@ export enum ActionType {
     PICKUP,
     DROPOFF,
     SUSPEND
-    // SUSPEND,
-    // RESUME
 }
 
 export interface Action {
     job: AnyJob;
     type: ActionType;
-    // location: LocationId;
-    // time: SimTime;
-    // quantity: number;
 }
 
 export interface TransferAction extends Action {
@@ -327,7 +284,6 @@ export class RoutePlanner {
 
     private *validPlansFromActions(trie: Trie, cart: Cart, previousState: PlanState, actions: (AnyAction | null)[], head: AnyAction[]): IterableIterator<Plan> {
         let leafNode = true;
-        // const state = { ...previousState };
 
         for (const branch of trie) {
             const action = actions[branch.key];
@@ -336,7 +292,7 @@ export class RoutePlanner {
                 const newHead = [...head, action];
                 const state = { ...previousState };
 
-                if (!this.applyAction(cart, state, action, NopLogger)) {
+                if (!this.applyAction(cart, state, action)) {
                     console.log('=================');
                     console.log('Failed:');
                     const plan = { cart, actions: newHead, score: state.workingTime };
@@ -356,31 +312,41 @@ export class RoutePlanner {
         }   
     }
 
-    private applyAction(cart: Cart, state: PlanState, action: AnyAction, logger: Logger ): boolean {
+    private applyAction(cart: Cart, state: PlanState, action: AnyAction, logger: Logger | null = null ): boolean {
         switch (action.type) {
             case ActionType.DROPOFF: {
-                logger(`DROPOFF ${action.quantity} bags at gate ${action.location} before ${action.time} (job ${action.job.id})`);
+                if (logger) {
+                    logger(`DROPOFF ${action.quantity} bags at gate ${action.location} before ${action.time} (job ${action.job.id})`);
+                }
                 const startTime = state.time;
 
                 if (action.location !== state.location) {
                     const transitTime = this.transitTimeEstimator(state.location, action.location, state.time);
-                    logger(`    ${state.time}: drive for ${transitTime}s to gate ${action.location}`);
+                    if (logger) {
+                        logger(`    ${state.time}: drive for ${transitTime}s to gate ${action.location}`);
+                    }
                     state.time += transitTime;
                     state.location = action.location;
                 }
 
                 const unloadTime = this.unloadTimeEstimator(action.location, action.quantity, state.time);
-                logger(`    ${state.time}: unload ${action.quantity} bags in ${unloadTime}s.`);
+                if (logger) {
+                    logger(`    ${state.time}: unload ${action.quantity} bags in ${unloadTime}s.`);
+                }
                 state.time += unloadTime;
                 state.payload -= action.quantity;
 
                 if (state.time > action.time) {
                     // This plan is invalid because it unloads after the deadline.
-                    logger(`    ${state.time}: dropoff after deadline ${action.time}`);
+                    if (logger) {
+                        logger(`    ${state.time}: dropoff after deadline ${action.time}`);
+                    }
                     return false;
                 }
 
                 if (state.payload < 0) {
+                    // TODO: for resiliance, perhaps this should log and return
+                    // false instead of throwing?
                     // This should never happen. Log and throw.
                     const message = `Bug: cart ${cart.id} has negative payload.`;
                     throw TypeError(message);
@@ -392,12 +358,16 @@ export class RoutePlanner {
             }
 
             case ActionType.PICKUP: {
-                logger(`PICKUP ${action.quantity} bags at gate ${action.location} after ${action.time} (job ${action.job.id})`);
+                if (logger) {
+                    logger(`PICKUP ${action.quantity} bags at gate ${action.location} after ${action.time} (job ${action.job.id})`);
+                }
                 const startTime = state.time;
 
                 if (action.location !== state.location) {
                     const transitTime = this.transitTimeEstimator(state.location, action.location, state.time);
-                    logger(`    ${state.time}: drive for ${transitTime}s to gate ${action.location}`);
+                    if (logger) {
+                        logger(`    ${state.time}: drive for ${transitTime}s to gate ${action.location}`);
+                    }
                     state.time += transitTime;
                     state.location = action.location;
                 }
@@ -405,18 +375,24 @@ export class RoutePlanner {
                 if (action.time > state.time) {
                     // Wait until load is available for pickup.
                     const waitTime = action.time - state.time;
-                    logger(`    ${state.time}: wait ${waitTime}s until ${action.time}`);
+                    if (logger) {
+                        logger(`    ${state.time}: wait ${waitTime}s until ${action.time}`);
+                    }
                     state.time = action.time;
                 }
 
                 const loadTime = this.loadTimeEstimator(action.location, action.quantity, state.time);
-                logger(`    ${state.time}: load ${action.quantity} bags in ${loadTime}s.`);
+                if (logger) {
+                    logger(`    ${state.time}: load ${action.quantity} bags in ${loadTime}s.`);
+                }
                 state.time += loadTime;
                 state.payload += action.quantity;
 
                 if (state.payload > cart.capacity) {
                     // This plan is invalid because its payload exceeds cart capacity.
-                    logger(`    ${state.time}: payload of ${state.payload} exceeds capacity of ${cart.capacity}`);
+                    if (logger) {
+                        logger(`    ${state.time}: payload of ${state.payload} exceeds capacity of ${cart.capacity}`);
+                    }
                     return false;
                 }
 
@@ -426,11 +402,15 @@ export class RoutePlanner {
             }
 
             case ActionType.SUSPEND: {
-                logger(`SUSPEND at gate ${action.location} before ${action.suspendTime} until ${action.resumeTime} (job ${action.job.id})`);
+                if (logger) {
+                    logger(`SUSPEND at gate ${action.location} before ${action.suspendTime} until ${action.resumeTime} (job ${action.job.id})`);
+                }
 
                 if (action.location !== state.location) {
                     const transitTime = this.transitTimeEstimator(state.location, action.location, state.time);;
-                    logger(`    ${state.time}: drive for ${transitTime}s to gate ${action.location}`);
+                    if (logger) {
+                        logger(`    ${state.time}: drive for ${transitTime}s to gate ${action.location}`);
+                    }
                     state.time += transitTime;
                     state.workingTime += transitTime;
                     state.location = action.location;
@@ -438,53 +418,43 @@ export class RoutePlanner {
 
                 if (state.time > action.suspendTime) {
                     // This plan is invalid because it suspends after the deadline.
-                    logger(`    ${state.time}: suspends after deadline ${action.suspendTime}`);
+                    if (logger) {
+                        logger(`    ${state.time}: suspends after deadline ${action.suspendTime}`);
+                    }
                     return false;
                 }
 
-                // if (action.time > state.time) {
-                //     // Wait until it is time to resume.
-                //     const waitTime = action.time - state.time;
-                //     logger(`    ${state.time}: wait ${waitTime}s until ${action.time}`);
-
-                //     state.time = action.time;
-                // }
-                
-                logger(`    ${state.time}: suspend operations`);
+                if (logger) {
+                    logger(`    ${state.time}: suspend operations`);
+                }
 
                 if (state.time < action.resumeTime) {
                     // Wait until it is time to resume.
                     const waitTime = action.resumeTime - state.time;
-                    logger(`    ${state.time}: wait ${waitTime}s until ${action.resumeTime}`);
+                    if (logger) {
+                        logger(`    ${state.time}: wait ${waitTime}s until ${action.resumeTime}`);
+                    }
                     state.time = action.resumeTime;                    
                 }
 
-                logger(`    ${state.time}: resume operations`);
+                if (logger) {
+                    logger(`    ${state.time}: resume operations`);
+                }
                 
                 break;
             }
 
-            // case ActionType.RESUME:
-            //     logger(`RESUME from gate ${action.location} at ${action.time} (job ${action.job.id})`);
-            //     if (action.time > state.time) {
-            //         // Wait until it is time to resume.
-            //         const waitTime = action.time - state.time;
-            //         logger(`    ${state.time}: wait ${waitTime}s until ${action.time}`);
-
-            //         state.time = action.time;
-            //     }
-
-            //     logger(`    ${state.time}: resume operations`)
-
-            //     break;
-
             default:
+                // TODO: for resiliance, perhaps this should log and return
+                // false instead of throwing?
                 // Should never get here. Log and throw.
                 const message = `Unknown action type ${(action as Action).type}`;
                 throw TypeError(message);
         }
 
-        logger(`    ${state.time}: completed`);
+        if (logger) {
+            logger(`    ${state.time}: completed`);
+        }
 
         // This plan was not shown to be invalid.
         return true;
@@ -509,18 +479,9 @@ export class RoutePlanner {
                             suspendTime: job.suspendTime,
                             resumeTime: job.resumeTime
                         } as SuspendAction);
+
                         actions.push(null);
                     }
-                    // else {
-                    //     actions.push(null);
-                    // }
-                    // actions.push({
-                    //     job,
-                    //     type: ActionType.RESUME,
-                    //     location: job.suspendLocation,
-                    //     time: job.resumeTime,
-                    //     quantity: 0
-                    // });
 
                     break;
 
@@ -537,6 +498,7 @@ export class RoutePlanner {
                     else {
                         actions.push(null);
                     }
+
                     actions.push({
                         job,
                         type: ActionType.DROPOFF,
@@ -572,222 +534,4 @@ export class RoutePlanner {
             this.applyAction(cart, state, action, logger);
         }
     }
-
-
-//     // Determines whether a plan satisfies the following constraints:
-//     //   1. Cart capacity is never exceeded.
-//     //   2. Dropoffs are before deadlines.
-//     // Assumes that plans never specify a job's dropoff before its pickup.
-//     // The enumerateAllPlans() generator only generates plans that meet this
-//     // criteria.
-//     //
-//     // NOTE that a plan with score zero may still be valid. An example would be
-//     // a plan that consists solely of an out-of-service interval.
-//     validateAndScore(plan: Plan, startTime: SimTime): boolean {
-//         let time = startTime;
-//         let location = plan.cart.lastKnownLocation;
-//         let payload = plan.cart.payload;
-//         let quantityTransferred = 0;
-
-//         for (const action of plan.actions) {
-//             time += this.transitTimeEstimator(location, action.location, time);
-
-//             if (action.type === ActionType.DROPOFF) {
-//                 time += this.unloadTimeEstimator(action.location, action.quantity, time);
-//                 if (time > action.time) {
-//                     // This plan is invalid because it unloads after the deadline.
-//                     plan.score = 0;
-//                     return false;
-//                 }
-//                 payload -= action.quantity;
-//                 quantityTransferred += action.quantity;
-
-//                 if (payload < 0) {
-//                     // This should never happen. Log and throw.
-//                     const message = `Cart ${plan.cart.id} has negative payload.`;
-//                     throw TypeError(message);
-//                 }
-//             }
-//             else if (action.type === ActionType.PICKUP) {
-//                 if (action.time > time) {
-//                     // Wait until load is available for pickup.
-//                     time = action.time;
-
-//                     time += this.loadTimeEstimator(action.location, action.quantity, time);
-//                     payload += action.quantity;
-
-//                     if (payload > plan.cart.capacity) {
-//                         // This plan is invalid because its payload exceeds cart capacity.
-//                         plan.score = 0;
-//                         return false;
-//                     }
-//                 }
-//             }
-//             else {
-//                 // Should never get here. Log and throw.
-//                 const message = `Unknown action type ${action.type}`;
-//                 throw TypeError(message);
-//             }
-//         }
-
-//         // This plan does not violate any constraints.
-
-//         // Score the plan.
-//         // This score represents average amount transferred per unit time.
-//         // It does not bias towards loads that are closer to their deadlines.
-//         // It does not directly consider cart utilization (although this is
-//         // correlated with transfer rate).
-
-//         // NOTE: the scoring here is for the quality of the routing, not
-//         // the value of the plan itself. Therefore, the criteria should
-//         // probably be minimizing elapsed time (or elasped time doing work vs
-//         // travelling out of service).
-// //        compileError;
-//         const elapsedTime = time - startTime;
-//         plan.score = quantityTransferred / elapsedTime;
-
-//         return true;
-//     }
 }
-
-export interface TrieNode {
-    key: number;
-    children: Trie;
-}
-export type Trie = Array<TrieNode>;
-
-// let counter = 0;
-
-export function buildTrie(head: number[], tail: number[]): Trie {
-    const children: Trie = [];
-
-    // if (tail.length === 0) {
-    //     console.log(`${counter++}: ${head.join('')}`);
-    // }
-
-    for (const [index, key] of tail.entries()) {
-        if (key % 2 == 0 || head.includes(key - 1)) {
-            const newHead = [...head, key];
-            const newTail = tail.filter(x => x !== key);
-            // console.log(`${counter++}: ${newHead.join('')}`);
-            children.push({
-                key,
-                children: buildTrie(newHead, newTail)
-            });
-        }
-    }
-    return children;
-}
-
-function walkTrie(trie: Trie, actions: (string|null)[], head: string[]) {
-    let leafNode = true;
-
-    for (const branch of trie) {
-        const action = actions[branch.key];
-        if (action) {
-            leafNode = false;
-            const newHead = [...head, action];
-            walkTrie(branch.children, actions, newHead);
-        }
-    }
-
-    if (leafNode) {
-        console.log(head.join(''));
-    }
-}
-
-// const trie = buildTrie([], [0, 1, 2, 3]);          // 89 permutations of three start-end pairs
-// walkTrie(trie, ['a', null, 'c', 'd', null, null], []);
-
-// buildTrie([], [0, 1, 2, 3]);
-// walkTrie(trie, ['a', null, 'c', 'd', 'e', 'f'], []);
-// buildTrie([], [0, 1, 2, 3, 4, 5, 6, 7]); // 2520 permutations of four start-end pairs.
-
-// CASE: planner can only look ahead 3 jobs, but there are 4 jobs that could all
-// be picked up at one location.
-
-
-/*
-Proposed algorithm
-
-for each cart
-    for each {a,b,c,..} subset of jobs
-        create plan(cart, [a,b,c])
-            for each permutation of destinations
-                exclude if capacity is exceeded
-                exclude if deadlines not fulfilled
-                find best scoring plan
-        add plan to priority queue
-        add plan to each job => plan list mapping
-
-// Greedy assign boulders
-while (some criteria)    // more carts to assign, value of remaining plans adequate
-    pull first plan from priority queue
-    assign plan to cart
-        this involves marking plamn's jobs as assigned
-        marking plan itself as assigned
-        removing all conflicting plans from consideration
-
-// Backfill with sand
-// Either pick carts and assign most valuable add-on job
-// or pick jobs and find best cart to assign
-for each assigned plan in order of decreasing elapsed time
-
-*/
-
-
-// 
-// DESIGN NOTES
-/*
-Need some way to constrain new plan proposals to satisfy in-progress plan elements.
-For example, if a plan involves jobs a, b, and c, and job a has already been picked
-up, new plans should contain job a.
-
-Need some way to constrain new plan proposals to satisfy constraints like planned
-out-of-service times.
-
-Need some way to track progress of jobs.
-    Before origin
-    Between origin and destination
-    Complete
-*/
-
-
-
-
-/*
-// On modeling out-of-service time
-
-// Each cart has an in-service interval and an out-of-service location.
-// Jobs can be specified during the in-service interval.
-// Legal assignments must allow transit time to out-of-service location.
-// */
-// const outOfService: Job = {
-//     id: 1234,
-
-//     state: TransferJobState.ENROUTE,
-//     assignedTo: 123,
-
-//     quantity: 0,
-
-//     pickupLocation: NO_LOCATION,
-//     pickupAfter: MIN_SIM_TIME,
-
-//     dropoffLocation: BREAK_ROOM,
-//     dropoffBefore: 17 * HOURS
-// }
-
-// const enteringService: Job = {
-//     id: 1235,
-
-//     state: TransferJobState.ENROUTE,
-//     assignedTo: 123,
-
-//     quantity: 0,
-
-//     pickupLocation: NO_LOCATION,
-//     pickupAfter: MIN_SIM_TIME,
-
-//     dropoffLocation: BREAK_ROOM,
-//     dropoffBefore: 17 * HOURS
-// }
