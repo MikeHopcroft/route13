@@ -1,22 +1,16 @@
 # TODO List
 
-* ~~Change model for suspend/resume actions.~~
-    * ~~One action, instead of a pair.~~
-    * ~~Action, TransferAction, SuspendAction~~
 * applyAction
     * ~~For performance, make logger optional. if (logger) ...~~
     * To avoid code duplication, make this method available to the simulator?
 * Remove unused packages from packages.json
-* ~~Fix `npm run test`~~
 * Set up travis ci
-* Unit test buildTrie
-* Unit test RoutePlanner
-* ~~Factor out trie code~~
-* ~~Factor out RoutePlanner~~
-* ~~Factor commonly used types out of RoutePlanner~~
+* Unit Tests
+    * buildTrie
+    * RoutePlanner
+    * Floyd-Warshall
 * Scoring with bias from job urgency
 * Performance measurements
-* Floyd-Warshall
 * . Coding guidelines
 * Contributing guidelines
 * . License
@@ -35,6 +29,8 @@
 
 
 ## Design Issues
+* How to change an out-of-service job.
+    * Suppose a cart is waiting out-of-service until 3pm and then a driver comes along at 2pm.
 * Is there some way to use the same code to apply actions and explain actions?
     * ~~Current code formats explanations even if they aren't used.~~
     * The simulator may also use this logic.
@@ -74,3 +70,15 @@ while (some criteria)    // more carts to assign, value of remaining plans adequ
 for each assigned plan in order of decreasing elapsed time
 
 ~~~
+
+
+## Completed
+* ~~Change model for suspend/resume actions.~~
+    * ~~One action, instead of a pair.~~
+    * ~~Action, TransferAction, SuspendAction~~
+* ~~Fix `npm run test`~~
+* ~~Factor out trie code~~
+* ~~Factor out RoutePlanner~~
+* ~~Factor commonly used types out of RoutePlanner~~
+* ~~Floyd-Warshall~~
+
