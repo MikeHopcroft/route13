@@ -5,5 +5,6 @@ import { LocationId, SimTime } from './types';
 // times, or a more complex model that considers factors like current and
 // anticipated congestion.
 export type TransitTimeEstimator = (origin: LocationId, destination: LocationId, startTime: SimTime) => SimTime;
+export type RouteNextStep = (origin: LocationId, destination: LocationId, startTime: SimTime) => LocationId;
 export type LoadTimeEstimator = (location: LocationId, quantity: number, startTime: SimTime) => SimTime;
 export type UnloadTimeEstimator = (location: LocationId, quantity: number, startTime: SimTime) => SimTime;

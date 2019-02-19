@@ -27,6 +27,14 @@ export interface TransferAction extends Action {
     quantity: number;
 }
 
+export interface PickupAction extends TransferAction {
+    type: ActionType.PICKUP;
+}
+
+export interface DropoffAction extends TransferAction {
+    type: ActionType.DROPOFF;
+}
+
 export interface SuspendAction extends Action {
     job: OutOfServiceJob;
     type: ActionType.SUSPEND;
@@ -35,7 +43,7 @@ export interface SuspendAction extends Action {
     resumeTime: SimTime;
 }
 
-export type AnyAction = TransferAction | SuspendAction;
+export type AnyAction = DropoffAction | PickupAction | SuspendAction;
 
 export interface Plan {
     cart: Cart;

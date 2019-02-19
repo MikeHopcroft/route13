@@ -1,5 +1,13 @@
 # TODO List
 
+* Environment
+    * Logging approach
+    * Job assignments and job assignment merging
+    * Main cart loop.
+        * Is it kicked off by new job assignments?
+        * Do carts have own loop that looks for new assignments? Don't want to poll, however.
+    * API/method to introduce job list and initial environment state.
+    * Consider integration of other planners.
 * applyAction
     * ~~For performance, make logger optional. if (logger) ...~~
     * To avoid code duplication, make this method available to the simulator?

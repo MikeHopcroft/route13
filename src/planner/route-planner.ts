@@ -1,7 +1,7 @@
 import { buildTrie, Trie } from './trie';
 import { Cart, LocationId, SimTime } from '../types';
 import { AnyJob, JobType, OutOfServiceJobState, TransferJobState } from '../types';
-import { Action, ActionType, AnyAction, Plan, SuspendAction, TransferAction } from '../types';
+import { Action, ActionType, AnyAction, DropoffAction, PickupAction, Plan, SuspendAction } from '../types';
 import { LoadTimeEstimator, TransitTimeEstimator, UnloadTimeEstimator } from '../types';
 
 interface PlanState {
@@ -323,7 +323,7 @@ export class RoutePlanner {
                             location: job.pickupLocation,
                             time: job.pickupAfter,
                             quantity: job.quantity
-                        } as TransferAction);
+                        } as PickupAction);
                     }
                     else {
                         actions.push(null);
@@ -335,7 +335,7 @@ export class RoutePlanner {
                         location: job.dropoffLocation,
                         time: job.dropoffBefore,
                         quantity: job.quantity
-                    } as TransferAction);
+                    } as DropoffAction);
 
                     break;
 
