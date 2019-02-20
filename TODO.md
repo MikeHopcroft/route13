@@ -15,8 +15,9 @@
 * Set up travis ci
 * Unit Tests
     * buildTrie
-    * RoutePlanner
+    * Combinations
     * Floyd-Warshall
+    * RoutePlanner
 * Scoring with bias from job urgency
 * Performance measurements
 * . Coding guidelines

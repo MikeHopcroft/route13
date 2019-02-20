@@ -4,9 +4,33 @@ import { ActionType, AnyAction, DropoffAction, PickupAction, Plan, SuspendAction
 import { Cart, CartId, Job, LocationId, SimTime } from "../types";
 import { LoadTimeEstimator, RouteNextStep, TransitTimeEstimator, UnloadTimeEstimator } from '../types';
 
+/*
+Job initially enter the system via the event queue, using the introduceJob() method.
+At the specified time, an introduced job becomes visible to the environment and is added to the backlog.
+Jobs on the backlog may or may not be assigned to a cart at any given time.
+
+The input to the planner consists of the job backlog, and the states of each of the carts.
+The planner generates a job assignment, which consists of a set of jobs for each cart.
+The new job assignment will always maintain the assignments of jobs that have already been started.
+
+The new job assignment is merged with the current job assignment to produce the assignment, moving forward.
+
+Race condition:
+Cart is assigned A, B, C.
+Cart starts on A.
+    Planner starts.
+    Cart finishes A and starts on B.
+    Planner finishes with assignment A, C, D.
+    How does cart merge [A, B, C] with [A, C, D]?
+        Challenge: [C, D] might not be appropriate for cart doing B.
+        Challenge: Taking the union of old and new assignments might make very complicated plan.
+
+Idea: planner assumes cart has dibs on any task that can be started in planning window.
+*/
+
 export interface Event {
     time: SimTime;
-    next: IterableIterator<SimTime>;
+    iterator: IterableIterator<SimTime>;
 }
 
 export class Environment {
@@ -54,6 +78,26 @@ export class Environment {
         // }
     }
 
+    // Processes the next event in the queue by advancing its iterator and
+    // requeuing if the interator has yet to complete.
+    // Returns false if the queue was empty.
+    processNextEvent(): boolean {
+        const event = this.queue.poll();
+        if (event) {
+            const { done, value } = event.iterator.next();
+            if (!done) {
+                this.enqueue(value, event.iterator);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    // Enqueues an iterator for a specified time in the future.
+    enqueue(time: SimTime, iterator: IterableIterator<SimTime>): void {
+        this.queue.add({time, iterator});
+    }
+
     *introduceJob(job: Job, time: SimTime) {
         // TODO: it is possible to introduce a job after its start time. Is this ok?
         // Should we log and throw?
@@ -64,15 +108,6 @@ export class Environment {
 
     // updateJob?
     // cancelJob?
-
-    // Returns true if there are more events.
-    processNextEvent(): boolean {
-        return false;
-    }
-
-    enqueue(time: SimTime, next: IterableIterator<SimTime>): void {
-        this.queue.add({time, next});
-    }
 
     *planningLoop() {
         while (!this.shuttingDown) {
@@ -94,8 +129,9 @@ export class Environment {
         // For now, simulate application of plan by doing nothing.
     }
 
-    *actionSequenxce(cart: Cart, actions: AnyAction[]) {
+    *actionSequence(cart: Cart, actions: AnyAction[]) {
         for (const action of actions) {
+            // TODO: before each action, check to see if there is a new action sequence.
             yield* this.action(cart, action);
         }
     }
@@ -153,6 +189,7 @@ export class Environment {
         }
         const loadingFinishedTime = this.time + this.loadTimeEstimator(cart.lastKnownLocation, quantity, this.time);
         yield loadingFinishedTime;
+        cart.payload += quantity;
     }
 
     *unload(cart: Cart, quantity: number) {
@@ -162,6 +199,7 @@ export class Environment {
         }
         const unloadingFinishedTime = this.time + this.unloadTimeEstimator(cart.lastKnownLocation, quantity, this.time);
         yield unloadingFinishedTime;
+        cart.payload -= quantity;
     }
 
     *waitUntil(resumeTime: SimTime) {
