@@ -1,5 +1,6 @@
 # TODO List
 
+* Need better terminology for IterableIterator<SimTime>
 * Environment
     * Logging approach
     * Job assignments and job assignment merging

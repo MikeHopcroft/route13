@@ -33,18 +33,95 @@ export interface Event {
     iterator: IterableIterator<SimTime>;
 }
 
+export class EventQueue {
+    private queue: FastPriorityQueue<Event>;
+
+    constructor() {
+        const eventComparator = (a: Event, b: Event) => a.time < b.time;
+        this.queue = new FastPriorityQueue<Event>(eventComparator);
+    }
+
+    // Enqueues an iterator for a specified time in the future.
+    enqueue(time: SimTime, iterator: IterableIterator<SimTime>): void {
+        this.queue.add({time, iterator});
+    }
+
+    // Processes the next event in the queue by advancing its iterator and
+    // requeuing if the interator has yet to complete.
+    // Returns false if the queue was empty.
+    processNextEvent(): boolean {
+        const event = this.queue.poll();
+        if (event) {
+            this.advanceIterator(event.iterator);
+            return true;
+        }
+        return false;
+    }
+
+    advanceIterator(iterator: IterableIterator<SimTime>) {
+        const { done, value } = iterator.next();
+        if (!done) {
+            this.enqueue(value, iterator);
+        }
+    }
+}
+
+export class Condition {
+    // TODO: add counter.
+    private queue: EventQueue;
+    private iterators: IterableIterator<SimTime>[];
+    private pendingWakeups: number;
+
+    constructor(queue: EventQueue) {
+        this.queue = queue;
+        this.iterators = [];
+        this.pendingWakeups = 0;
+    }
+
+    sleep(iterator: IterableIterator<SimTime>) {
+        if (this.pendingWakeups > 0) {
+            --this.pendingWakeups;
+            this.queue.advanceIterator(iterator);
+        }
+        else {
+            this.iterators.push(iterator);
+        }
+    }
+
+    wakeAll() {
+        while (this.iterators.length > 0) {
+            this.wakeOne();
+        }
+    }
+
+    wakeOne() {
+        const iterator = this.iterators.shift();
+        if (iterator) {
+            this.queue.advanceIterator(iterator);
+        }
+        else {
+            ++this.pendingWakeups;
+        }
+    }
+}
+
 export class Environment {
-    loadTimeEstimator: LoadTimeEstimator;
-    routeNextStep: RouteNextStep;
-    unloadTimeEstimator: UnloadTimeEstimator;
-    transitTimeEstimator: TransitTimeEstimator;
+    private loadTimeEstimator: LoadTimeEstimator;
+    private routeNextStep: RouteNextStep;
+    private unloadTimeEstimator: UnloadTimeEstimator;
+    private transitTimeEstimator: TransitTimeEstimator;
 
-    shuttingDown: boolean;
+    private shuttingDown: boolean;
 
-    time: SimTime;
+    private time: SimTime;
 
-    queue: FastPriorityQueue<Event>;
-    fleet: Map<CartId, Cart>;
+    // queue: FastPriorityQueue<Event>;
+    private queue: EventQueue;
+
+    private fleet: Map<CartId, Cart>;
+
+    private unassignedJobs: Set<Job>;
+    private assignedJobs: Map<CartId, Job>;
 
     // TODO: need some way to pass initial cart state.
     // TODO: distinction between carts and plans.
@@ -69,9 +146,13 @@ export class Environment {
         this.fleet = new Map<CartId, Cart>();
         // TODO: initialize fleet.
 
+        this.unassignedJobs = new Set<Job>();
+        this.assignedJobs = new Map<CartId, Job>();
+
         // Initialized event queue.
-        const eventComparator = (a: Event, b: Event) => a.time < b.time;
-        this.queue = new FastPriorityQueue(eventComparator);
+        this.queue = new EventQueue();
+        // const eventComparator = (a: Event, b: Event) => a.time < b.time;
+        // this.queue = new FastPriorityQueue(eventComparator);
 
         // for (const event of events) {
         //     this.queue.add(event);
@@ -82,20 +163,12 @@ export class Environment {
     // requeuing if the interator has yet to complete.
     // Returns false if the queue was empty.
     processNextEvent(): boolean {
-        const event = this.queue.poll();
-        if (event) {
-            const { done, value } = event.iterator.next();
-            if (!done) {
-                this.enqueue(value, event.iterator);
-            }
-            return true;
-        }
-        return false;
+        return this.queue.processNextEvent();
     }
 
     // Enqueues an iterator for a specified time in the future.
     enqueue(time: SimTime, iterator: IterableIterator<SimTime>): void {
-        this.queue.add({time, iterator});
+        this.queue.enqueue(time, iterator);
     }
 
     *introduceJob(job: Job, time: SimTime) {
@@ -104,6 +177,16 @@ export class Environment {
         yield* this.waitUntil(time);
 
         // TODO: add job to list of outstanding jobs.
+        this.unassignedJobs.add(job);
+    }
+
+    *agent(cart: Cart) {
+        while (true) {
+            // Select a job.
+            //   What if there is no job available?
+            // Convert job to a plan.
+            // Execute plan.
+        }
     }
 
     // updateJob?
@@ -137,6 +220,7 @@ export class Environment {
     }
 
     *action(cart: Cart, action: AnyAction) {
+        // DESIGN NOTE: could eliminate this switch statement if Actions were classes.
         switch (action.type) {
             case ActionType.DROPOFF:
                 yield* this.dropoff(cart, action);
