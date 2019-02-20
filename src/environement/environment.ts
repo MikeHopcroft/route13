@@ -1,7 +1,8 @@
 import FastPriorityQueue from 'FastPriorityQueue';
 
+import { RoutePlanner } from '../planner';
 import { ActionType, AnyAction, DropoffAction, PickupAction, Plan, SuspendAction } from '../types'
-import { Cart, CartId, Job, LocationId, SimTime } from "../types";
+import { AnyJob, Cart, CartId, Job, LocationId, SimTime } from "../types";
 import { LoadTimeEstimator, RouteNextStep, TransitTimeEstimator, UnloadTimeEstimator } from '../types';
 
 /*
@@ -28,9 +29,12 @@ Cart starts on A.
 Idea: planner assumes cart has dibs on any task that can be started in planning window.
 */
 
+export type Step = (future: IterableIterator<Step>) => void;
+export type Continuation = IterableIterator<Step>;
+
 export interface Event {
     time: SimTime;
-    iterator: IterableIterator<SimTime>;
+    continuation: Continuation;
 }
 
 export class EventQueue {
@@ -42,8 +46,8 @@ export class EventQueue {
     }
 
     // Enqueues an iterator for a specified time in the future.
-    enqueue(time: SimTime, iterator: IterableIterator<SimTime>): void {
-        this.queue.add({time, iterator});
+    enqueue(time: SimTime, continuation: Continuation): void {
+        this.queue.add({time, continuation: continuation});
     }
 
     // Processes the next event in the queue by advancing its iterator and
@@ -52,24 +56,26 @@ export class EventQueue {
     processNextEvent(): boolean {
         const event = this.queue.poll();
         if (event) {
-            this.advanceIterator(event.iterator);
+            this.resumeContinuation(event.continuation);
             return true;
         }
         return false;
     }
 
-    advanceIterator(iterator: IterableIterator<SimTime>) {
-        const { done, value } = iterator.next();
+    resumeContinuation(continuation: Continuation) {
+        const { done, value } = continuation.next();
+        const schedule = value;
         if (!done) {
-            this.enqueue(value, iterator);
+            schedule(continuation);
         }
     }
 }
 
+
+
 export class Condition {
-    // TODO: add counter.
     private queue: EventQueue;
-    private iterators: IterableIterator<SimTime>[];
+    private iterators: Continuation[];
     private pendingWakeups: number;
 
     constructor(queue: EventQueue) {
@@ -78,10 +84,10 @@ export class Condition {
         this.pendingWakeups = 0;
     }
 
-    sleep(iterator: IterableIterator<SimTime>) {
+    sleep(iterator: Continuation) {
         if (this.pendingWakeups > 0) {
             --this.pendingWakeups;
-            this.queue.advanceIterator(iterator);
+            this.queue.resumeContinuation(iterator);
         }
         else {
             this.iterators.push(iterator);
@@ -97,7 +103,7 @@ export class Condition {
     wakeOne() {
         const iterator = this.iterators.shift();
         if (iterator) {
-            this.queue.advanceIterator(iterator);
+            this.queue.resumeContinuation(iterator);
         }
         else {
             ++this.pendingWakeups;
@@ -120,8 +126,14 @@ export class Environment {
 
     private fleet: Map<CartId, Cart>;
 
-    private unassignedJobs: Set<Job>;
-    private assignedJobs: Map<CartId, Job>;
+    private unassignedJobs: AnyJob[];
+    private assignedJobs: Set<AnyJob>;
+    private successfulJobs: AnyJob[];
+    private failedJobs: AnyJob[];
+
+    private jobAvailableCondition: Condition;
+
+    private routePlanner: RoutePlanner;
 
     // TODO: need some way to pass initial cart state.
     // TODO: distinction between carts and plans.
@@ -138,25 +150,27 @@ export class Environment {
         this.unloadTimeEstimator = unloadTimeEstimator;
         this.transitTimeEstimator = transitTimeEstimator;
 
-        this.shuttingDown = false;
-
         // TODO: should this be the time of the first event?
         this.time = 0;
 
         this.fleet = new Map<CartId, Cart>();
         // TODO: initialize fleet.
 
-        this.unassignedJobs = new Set<Job>();
-        this.assignedJobs = new Map<CartId, Job>();
+        this.unassignedJobs = [];
+        this.assignedJobs = new Set<AnyJob>();
+        this.successfulJobs = [];
+        this.failedJobs = [];
 
-        // Initialized event queue.
+        this.shuttingDown = false;
         this.queue = new EventQueue();
-        // const eventComparator = (a: Event, b: Event) => a.time < b.time;
-        // this.queue = new FastPriorityQueue(eventComparator);
+        this.jobAvailableCondition = new Condition(this.queue);
 
-        // for (const event of events) {
-        //     this.queue.add(event);
-        // }
+        const maxJobs = 2;
+        this.routePlanner = new RoutePlanner(
+            maxJobs,
+            this.loadTimeEstimator,
+            this.unloadTimeEstimator,
+            this.transitTimeEstimator);
     }
 
     // Processes the next event in the queue by advancing its iterator and
@@ -167,25 +181,57 @@ export class Environment {
     }
 
     // Enqueues an iterator for a specified time in the future.
-    enqueue(time: SimTime, iterator: IterableIterator<SimTime>): void {
+    enqueue(time: SimTime, iterator: Continuation): void {
         this.queue.enqueue(time, iterator);
     }
 
-    *introduceJob(job: Job, time: SimTime) {
+    until(time: SimTime) {
+        return (future: Continuation) => {
+            this.queue.enqueue(time, future);
+        }
+    }
+
+    waitForJob() {
+        return (future: Continuation) => {
+            this.jobAvailableCondition.sleep(future);
+        }
+    }
+
+    *introduceJob(job: AnyJob, time: SimTime) {
         // TODO: it is possible to introduce a job after its start time. Is this ok?
         // Should we log and throw?
         yield* this.waitUntil(time);
 
         // TODO: add job to list of outstanding jobs.
-        this.unassignedJobs.add(job);
+        this.unassignedJobs.push(job);
+        this.jobAvailableCondition.wakeOne();
     }
 
+    // Simple agent processes one job at a time.
+    // When finished, grabs next unassigned job in FIFO order.
     *agent(cart: Cart) {
         while (true) {
+            // Wait for a job to become available.
+            yield this.waitForJob();
+
             // Select a job.
-            //   What if there is no job available?
+            const job = this.unassignedJobs.shift() as AnyJob;
+            this.assignedJobs.add(job);
+
             // Convert job to a plan.
+            const plan = this.routePlanner.getBestRoute(cart, [job], this.time);
+
             // Execute plan.
+            if (plan) {
+                this.actionSequence(cart, plan.actions);
+                this.assignedJobs.delete(job);
+                this.successfulJobs.push(job);
+            }
+            else {
+                // There is no plan that can complete this job.
+                this.assignedJobs.delete(job);
+                this.failedJobs.push(job);
+            }
         }
     }
 
@@ -261,7 +307,7 @@ export class Environment {
         while (cart.lastKnownLocation !== destination) {
             const next = this.routeNextStep(cart.lastKnownLocation, destination, this.time);
             const driveTime = this.transitTimeEstimator(cart.lastKnownLocation, next, this.time);
-            yield this.time + driveTime;
+            yield this.until(this.time + driveTime);
             cart.lastKnownLocation = next;
         }
     }
@@ -272,7 +318,7 @@ export class Environment {
             throw TypeError(message);
         }
         const loadingFinishedTime = this.time + this.loadTimeEstimator(cart.lastKnownLocation, quantity, this.time);
-        yield loadingFinishedTime;
+        yield this.until(loadingFinishedTime);
         cart.payload += quantity;
     }
 
@@ -282,13 +328,13 @@ export class Environment {
             throw TypeError(message);
         }
         const unloadingFinishedTime = this.time + this.unloadTimeEstimator(cart.lastKnownLocation, quantity, this.time);
-        yield unloadingFinishedTime;
+        yield this.until(unloadingFinishedTime);
         cart.payload -= quantity;
     }
 
     *waitUntil(resumeTime: SimTime) {
         if (this.time < resumeTime) {
-            yield resumeTime;
+            yield this.until(resumeTime);
         }
     }
 }
