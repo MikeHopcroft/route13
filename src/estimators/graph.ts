@@ -120,14 +120,14 @@ export class Graph {
         logger(`=== Iteration ${iteration} ===`);
         logger('Distances');
         for (let i = 0; i < this.vertexCount; ++i) {
-            logger(`${i}: ${this.distance[i].join(' ')}`);
+            logger(`${i}: ${this.distance[i].join(', ')}`);
         }
     
         logger('');
     
         logger('Next');
         for (let i = 0; i < this.vertexCount; ++i) {
-            logger(`${i}: ${this.next[i].map((v) => v?v:'x').join(' ')}`);
+            logger(`${i}: ${this.next[i].map((v) => (v != null)?v:'x').join(' ')}`);
         }
 
         logger('');
