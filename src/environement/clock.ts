@@ -1,4 +1,6 @@
-import FastPriorityQueue from 'FastPriorityQueue';
+// TODO: Figure out why import on next line doesn't work.
+//import FastPriorityQueue from 'fastpriorityqueue';
+var FastPriorityQueue = require("fastpriorityqueue");
 
 import { Continuation, NextStep, resume } from './continuation';
 import { SimTime } from '../types';
@@ -9,7 +11,9 @@ interface Event {
 }
 
 export class Clock {
-    private queue: FastPriorityQueue<Event>;
+    // TODO: Figure out why impost doesn't work.
+//    private queue: FastPriorityQueue<Event>;
+    private queue: any;
     time: SimTime;
 
     constructor() {

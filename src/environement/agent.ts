@@ -35,7 +35,7 @@ export class Agent {
 
             // Execute plan.
             if (plan) {
-                this.actionSequence(cart, plan.actions);
+                yield* this.actionSequence(cart, plan.actions);
                 this.env.completeJob(job);
             }
             else {
@@ -75,32 +75,48 @@ export class Agent {
 
     private *pickup(cart: Cart, action: PickupAction) {
         yield* this.driveTo(cart, action.location);
-        yield* this.waitUntil(action.time);
+        yield* this.waitUntil(cart, action.time);
         yield* this.load(cart, action.quantity);
     }
 
     private *dropoff(cart: Cart, action: DropoffAction) {
         yield* this.driveTo(cart, action.location);
-        yield* this.waitUntil(action.time);
         yield* this.unload(cart, action.quantity);
     }
 
     private *suspend(cart: Cart, action: SuspendAction) {
         yield* this.driveTo(cart, action.location);
-        yield* this.waitUntil(action.resumeTime);
+
+        if (this.trace) {
+            this.trace.cartSuspendsService(cart);
+        }
+
+        yield* this.waitUntil(cart, action.resumeTime);
+
+        if (this.trace) {
+            this.trace.cartResumesService(cart);
+        }
     }
 
     private *driveTo(cart: Cart, destination: LocationId) {
+        const start = cart.lastKnownLocation;
         while (cart.lastKnownLocation !== destination) {
             const next = this.env.routeNextStep(cart.lastKnownLocation, destination, this.clock.time);
             const driveTime = this.env.transitTimeEstimator(cart.lastKnownLocation, next, this.clock.time);
             if (this.trace) {
-                this.trace.cartDeparts(cart, next);
+                if (cart.lastKnownLocation === start) {
+                    this.trace.cartDeparts(cart, destination);
+                }
             }
             yield this.clock.until(this.clock.time + driveTime);
             cart.lastKnownLocation = next;
             if (this.trace) {
-                this.trace.cartArrives(cart);
+                if (cart.lastKnownLocation === destination) {
+                    this.trace.cartArrives(cart);
+                }
+                else {
+                    this.trace.cartPasses(cart);
+                }
             }
         }
     }
@@ -143,8 +159,11 @@ export class Agent {
         }
     }
 
-    private *waitUntil(resumeTime: SimTime) {
+    private *waitUntil(cart: Cart, resumeTime: SimTime) {
         if (this.clock.time < resumeTime) {
+            if (this.trace) {
+                this.trace.cartWaits(cart, resumeTime);
+            }
             yield this.clock.until(resumeTime);
         }
     }

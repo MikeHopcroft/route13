@@ -1,5 +1,7 @@
 # TODO List
 
+* Event that gathers stats like job completion counts.
+* Scenario of introducing pre-assigned jobs like out-of-service periods.
 * REPL
 * Logging
     * Human readable or machine readable?

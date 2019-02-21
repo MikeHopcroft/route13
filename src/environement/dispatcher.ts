@@ -35,7 +35,7 @@ export class Dispatcher {
         // Should we log and throw?
         yield this.clock.until(time);
 
-        // TODO: add job to list of outstanding jobs.
+        // TODO: what if job has already been assigned?
         this.env.unassignedJobs.push(job);
         this.env.jobAvailableCondition.wakeOne();
     }
