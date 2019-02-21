@@ -2,11 +2,11 @@
 
 * Samples
     * Optimal route planning
-        * RoutePlanner.applyAction should not take cart parameter.
+        * ~~RoutePlanner.applyAction should not take cart parameter.~~
         * Plan score is different than working time
-        * Logging for failed plans - right now this always goes to the console
-        * Better text output
-        * Use chalk
+        * ~~Logging for failed plans - right now this always goes to the console~~
+        * ~~Better text output~~
+        * x Use chalk
     * Simulator log.
 * Floyd-Warshall
     * Generate cost and next functions in proper form.

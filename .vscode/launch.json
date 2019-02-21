@@ -39,8 +39,8 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Floyd-Warshall",
-            "program": "${workspaceFolder}/build/src/planner/floyd-warshall.js",
+            "name": "Graph demo",
+            "program": "${workspaceFolder}/build/samples/graph-demo.js",
         },
         {
             "type": "node",
