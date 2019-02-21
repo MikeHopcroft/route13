@@ -1,20 +1,50 @@
 # TODO List
 
-* Agent updates job status
+* Samples
+    * Optimal route planning
+        * RoutePlanner.applyAction should not take cart parameter.
+        * Plan score is different than working time
+        * Logging for failed plans - right now this always goes to the console
+        * Better text output
+        * Use chalk
+    * Simulator log.
+* Floyd-Warshall
+    * Generate cost and next functions in proper form.
+    * Unit test with new route
+    * Documentation
+    * Move to Estimators directory
+* README.md
+    * Project name
+    * Instructions
+    * Explain Flyod-Warshall
+    * Overview
+* Event that gathers stats like job completion counts.
+* JSON tracing
+* Set up travis ci
+* Remove unused packages from packages.json
+* Unit Tests
+    * buildTrie
+    * Combinations
+    * Floyd-Warshall
+    * RoutePlanner
+
+
+* Job.assignedTo should be of type Cart, rather than number.
 * Functions to create each kind of job.
+* Scenario of introducing pre-assigned jobs like out-of-service periods.
+
+* Agent updates job status
 * Agents
     * Assign FIFO job as carts become available
     * Assign nearest job as carts become available
     * Assign best combination of jobs
-* Event that gathers stats like job completion counts.
-* Scenario of introducing pre-assigned jobs like out-of-service periods.
 * REPL
 * Logging
-    * Human readable or machine readable?
-* Need better terminology for IterableIterator<SimTime>
-* Difference between until() and waitUntil()
+    * ~~Human readable or machine readable?~~
+* ~~Need better terminology for IterableIterator<SimTime>~~
+* . Difference between until() and waitUntil()
 * Environment
-    * Logging approach
+    * ~~Logging approach~~
     * Job assignments and job assignment merging
     * Main cart loop.
         * Is it kicked off by new job assignments?
@@ -24,13 +54,6 @@
 * applyAction
     * ~~For performance, make logger optional. if (logger) ...~~
     * To avoid code duplication, make this method available to the simulator?
-* Remove unused packages from packages.json
-* Set up travis ci
-* Unit Tests
-    * buildTrie
-    * Combinations
-    * Floyd-Warshall
-    * RoutePlanner
 * Scoring with bias from job urgency
 * Performance measurements
 * . Coding guidelines

@@ -21,7 +21,7 @@ export class Agent {
 
     // Simple agent processes one job at a time.
     // When finished, grabs next unassigned job in FIFO order.
-    *agent(cart: Cart): Continuation {
+    *newWorker(cart: Cart): Continuation {
         while (true) {
             // Wait for a job to become available.
             yield this.dispatcher.waitForJob();
@@ -36,12 +36,9 @@ export class Agent {
             // Execute plan.
             if (plan) {
                 yield* this.actionSequence(cart, plan.actions);
-
-                // TODO: This call is only valid for plans with a single job. Should really be on the action.
-                // this.env.completeJob(job);
             }
             else {
-                // There is no plan that can complete this job.
+                // There is no plan for this cart to complete this job.
                 this.env.failJob(job);
             }
         }
