@@ -10,9 +10,10 @@
     * Simulator log.
 * Floyd-Warshall
     * Generate cost and next functions in proper form.
+    * ~~Unit test~~
     * Unit test with new route
-    * Documentation
-    * Move to Estimators directory
+    * ~~Documentation~~
+    * ~~Move to Estimators directory~~
 * README.md
     * Project name
     * Instructions
@@ -21,7 +22,8 @@
 * Event that gathers stats like job completion counts.
 * JSON tracing
 * Set up travis ci
-* Remove unused packages from packages.json
+* ~~Remove unused packages from packages.json~~
+* Figure out postcompile in packages.json
 * Unit Tests
     * buildTrie
     * Combinations

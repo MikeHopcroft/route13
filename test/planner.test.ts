@@ -60,7 +60,5 @@ describe('planner', () => {
         const time = 0;
 
         planner.getBestRoute(cart, jobs, time);
-
-        console.log('hello');
     });
 });
