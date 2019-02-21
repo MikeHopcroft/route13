@@ -1,9 +1,9 @@
-import FastPriorityQueue from 'FastPriorityQueue';
-
+import { Condition, Continuation, Event, EventQueue, resume } from './eventing'
 import { RoutePlanner } from '../planner';
 import { ActionType, AnyAction, DropoffAction, PickupAction, Plan, SuspendAction } from '../types'
-import { AnyJob, Cart, CartId, Job, LocationId, SimTime } from "../types";
+import { AnyJob, Cart, CartId, LocationId, SimTime } from "../types";
 import { LoadTimeEstimator, RouteNextStep, TransitTimeEstimator, UnloadTimeEstimator } from '../types';
+import FastPriorityQueue from 'FastPriorityQueue';
 
 /*
 Job initially enter the system via the event queue, using the introduceJob() method.
@@ -29,111 +29,41 @@ Cart starts on A.
 Idea: planner assumes cart has dibs on any task that can be started in planning window.
 */
 
-export type Step = (future: IterableIterator<Step>) => void;
-export type Continuation = IterableIterator<Step>;
-
-export interface Event {
-    time: SimTime;
-    continuation: Continuation;
-}
-
-export class EventQueue {
-    private queue: FastPriorityQueue<Event>;
-
-    constructor() {
-        const eventComparator = (a: Event, b: Event) => a.time < b.time;
-        this.queue = new FastPriorityQueue<Event>(eventComparator);
-    }
-
-    // Enqueues an iterator for a specified time in the future.
-    enqueue(time: SimTime, continuation: Continuation): void {
-        this.queue.add({time, continuation: continuation});
-    }
-
-    // Processes the next event in the queue by advancing its iterator and
-    // requeuing if the interator has yet to complete.
-    // Returns false if the queue was empty.
-    processNextEvent(): boolean {
-        const event = this.queue.poll();
-        if (event) {
-            this.resumeContinuation(event.continuation);
-            return true;
-        }
-        return false;
-    }
-
-    resumeContinuation(continuation: Continuation) {
-        const { done, value } = continuation.next();
-        const schedule = value;
-        if (!done) {
-            schedule(continuation);
-        }
-    }
-}
-
-
-
-export class Condition {
-    private queue: EventQueue;
-    private iterators: Continuation[];
-    private pendingWakeups: number;
-
-    constructor(queue: EventQueue) {
-        this.queue = queue;
-        this.iterators = [];
-        this.pendingWakeups = 0;
-    }
-
-    sleep(iterator: Continuation) {
-        if (this.pendingWakeups > 0) {
-            --this.pendingWakeups;
-            this.queue.resumeContinuation(iterator);
-        }
-        else {
-            this.iterators.push(iterator);
-        }
-    }
-
-    wakeAll() {
-        while (this.iterators.length > 0) {
-            this.wakeOne();
-        }
-    }
-
-    wakeOne() {
-        const iterator = this.iterators.shift();
-        if (iterator) {
-            this.queue.resumeContinuation(iterator);
-        }
-        else {
-            ++this.pendingWakeups;
-        }
-    }
-}
-
 export class Environment {
+    //
+    // Estimators and routing.
+    //
     private loadTimeEstimator: LoadTimeEstimator;
     private routeNextStep: RouteNextStep;
     private unloadTimeEstimator: UnloadTimeEstimator;
     private transitTimeEstimator: TransitTimeEstimator;
 
-    private shuttingDown: boolean;
+    private routePlanner: RoutePlanner;
 
+    //
+    // State of the environment
+    //
     private time: SimTime;
-
-    // queue: FastPriorityQueue<Event>;
-    private queue: EventQueue;
-
     private fleet: Map<CartId, Cart>;
 
+    //
+    // Eventing system
+    //
+    private shuttingDown: boolean;
+    private queue: EventQueue;
+    private q2: FastPriorityQueue<Event>;
+
+    //
+    // Job related
+    //
     private unassignedJobs: AnyJob[];
+    private jobAvailableCondition: Condition;
+
     private assignedJobs: Set<AnyJob>;
     private successfulJobs: AnyJob[];
     private failedJobs: AnyJob[];
 
-    private jobAvailableCondition: Condition;
 
-    private routePlanner: RoutePlanner;
 
     // TODO: need some way to pass initial cart state.
     // TODO: distinction between carts and plans.
@@ -163,6 +93,10 @@ export class Environment {
 
         this.shuttingDown = false;
         this.queue = new EventQueue();
+
+        const eventComparator = (a: Event, b: Event) => a.time < b.time;
+        this.q2 = new FastPriorityQueue<Event>(eventComparator);
+
         this.jobAvailableCondition = new Condition(this.queue);
 
         const maxJobs = 2;
@@ -173,21 +107,22 @@ export class Environment {
             this.transitTimeEstimator);
     }
 
-    // Processes the next event in the queue by advancing its iterator and
-    // requeuing if the interator has yet to complete.
-    // Returns false if the queue was empty.
-    processNextEvent(): boolean {
-        return this.queue.processNextEvent();
-    }
-
-    // Enqueues an iterator for a specified time in the future.
-    enqueue(time: SimTime, iterator: Continuation): void {
-        this.queue.enqueue(time, iterator);
+    mainloop() {
+        while (true) {
+            const event = this.q2.poll();
+            if (event) {
+                resume(event.continuation);
+            }
+            else {
+                break;
+            }
+        }
     }
 
     until(time: SimTime) {
-        return (future: Continuation) => {
-            this.queue.enqueue(time, future);
+        return (continuation: Continuation) => {
+            this.q2.add({ time, continuation })
+//            this.queue.enqueue(time, future);
         }
     }
 
