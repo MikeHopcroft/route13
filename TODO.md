@@ -1,6 +1,8 @@
 # TODO List
 
+* REPL
 * Need better terminology for IterableIterator<SimTime>
+* Difference between until() and waitUntil()
 * Environment
     * Logging approach
     * Job assignments and job assignment merging

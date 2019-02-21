@@ -1,9 +1,11 @@
-import { Condition, Continuation, Event, EventQueue, resume } from './eventing'
+import FastPriorityQueue from 'FastPriorityQueue';
+
+import { Condition } from './condition'
+import { Continuation, resume } from './continuation';
 import { RoutePlanner } from '../planner';
 import { ActionType, AnyAction, DropoffAction, PickupAction, Plan, SuspendAction } from '../types'
 import { AnyJob, Cart, CartId, LocationId, SimTime } from "../types";
 import { LoadTimeEstimator, RouteNextStep, TransitTimeEstimator, UnloadTimeEstimator } from '../types';
-import FastPriorityQueue from 'FastPriorityQueue';
 
 /*
 Job initially enter the system via the event queue, using the introduceJob() method.
@@ -29,6 +31,12 @@ Cart starts on A.
 Idea: planner assumes cart has dibs on any task that can be started in planning window.
 */
 
+interface Event {
+    time: SimTime;
+    continuation: Continuation;
+}
+
+
 export class Environment {
     //
     // Estimators and routing.
@@ -50,8 +58,7 @@ export class Environment {
     // Eventing system
     //
     private shuttingDown: boolean;
-    private queue: EventQueue;
-    private q2: FastPriorityQueue<Event>;
+    private queue: FastPriorityQueue<Event>;
 
     //
     // Job related
@@ -92,12 +99,10 @@ export class Environment {
         this.failedJobs = [];
 
         this.shuttingDown = false;
-        this.queue = new EventQueue();
-
         const eventComparator = (a: Event, b: Event) => a.time < b.time;
-        this.q2 = new FastPriorityQueue<Event>(eventComparator);
+        this.queue = new FastPriorityQueue<Event>(eventComparator);
 
-        this.jobAvailableCondition = new Condition(this.queue);
+        this.jobAvailableCondition = new Condition();
 
         const maxJobs = 2;
         this.routePlanner = new RoutePlanner(
@@ -109,7 +114,7 @@ export class Environment {
 
     mainloop() {
         while (true) {
-            const event = this.q2.poll();
+            const event = this.queue.poll();
             if (event) {
                 resume(event.continuation);
             }
@@ -121,8 +126,7 @@ export class Environment {
 
     until(time: SimTime) {
         return (continuation: Continuation) => {
-            this.q2.add({ time, continuation })
-//            this.queue.enqueue(time, future);
+            this.queue.add({ time, continuation })
         }
     }
 
@@ -149,7 +153,7 @@ export class Environment {
             // Wait for a job to become available.
             yield this.waitForJob();
 
-            // Select a job.
+            // Select a job, FIFO order.
             const job = this.unassignedJobs.shift() as AnyJob;
             this.assignedJobs.add(job);
 
