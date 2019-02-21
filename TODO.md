@@ -2,6 +2,7 @@
 
 * REPL
 * Logging
+    * Human readable or machine readable?
 * Need better terminology for IterableIterator<SimTime>
 * Difference between until() and waitUntil()
 * Environment

@@ -1,30 +1,34 @@
 import { ActionType, AnyAction, DropoffAction, PickupAction, SuspendAction } from '../types'
 import { AnyJob, Cart, LocationId, SimTime } from '../types';
 import { Clock } from './clock';
+import { Continuation } from './continuation';
 import { Dispatcher } from './dispatcher';
 import { Environment } from './environment';
+import { Trace } from './trace';
 
-class Agent {
+export class Agent {
     private clock: Clock;
-    dispatcher: Dispatcher;
+    private dispatcher: Dispatcher;
     private env: Environment;
+    private trace: Trace | undefined;
 
-    constructor(clock: Clock, dispatcher: Dispatcher, env: Environment) {
+    constructor(clock: Clock, dispatcher: Dispatcher, env: Environment, trace: Trace | undefined) {
         this.clock = clock;
         this.dispatcher = dispatcher;
         this.env = env;
+        this.trace = trace;
     }
 
     // Simple agent processes one job at a time.
     // When finished, grabs next unassigned job in FIFO order.
-    *agent(cart: Cart) {
+    *agent(cart: Cart): Continuation {
         while (true) {
             // Wait for a job to become available.
             yield this.dispatcher.waitForJob();
 
             // Select a job, FIFO order.
             const job = this.env.unassignedJobs.shift() as AnyJob;
-            this.env.assignedJobs.add(job);
+            this.env.assignJob(job, cart);
 
             // Convert job to a plan.
             const plan = this.env.routePlanner.getBestRoute(cart, [job], this.clock.time);
@@ -32,13 +36,11 @@ class Agent {
             // Execute plan.
             if (plan) {
                 this.actionSequence(cart, plan.actions);
-                this.env.assignedJobs.delete(job);
-                this.env.successfulJobs.push(job);
+                this.env.completeJob(job);
             }
             else {
                 // There is no plan that can complete this job.
-                this.env.assignedJobs.delete(job);
-                this.env.failedJobs.push(job);
+                this.env.failJob(job);
             }
         }
     }
@@ -92,8 +94,14 @@ class Agent {
         while (cart.lastKnownLocation !== destination) {
             const next = this.env.routeNextStep(cart.lastKnownLocation, destination, this.clock.time);
             const driveTime = this.env.transitTimeEstimator(cart.lastKnownLocation, next, this.clock.time);
+            if (this.trace) {
+                this.trace.cartDeparts(cart, next);
+            }
             yield this.clock.until(this.clock.time + driveTime);
             cart.lastKnownLocation = next;
+            if (this.trace) {
+                this.trace.cartArrives(cart);
+            }
         }
     }
 
@@ -102,9 +110,18 @@ class Agent {
             const message = `cart ${cart.id} with ${cart.payload} will exceed capacity loading ${quantity} items.`
             throw TypeError(message);
         }
+
+        if (this.trace) {
+            this.trace.cartBeginsLoading(cart, quantity);
+        }
+
         const loadingFinishedTime = this.clock.time + this.env.loadTimeEstimator(cart.lastKnownLocation, quantity, this.clock.time);
         yield this.clock.until(loadingFinishedTime);
         cart.payload += quantity;
+
+        if (this.trace) {
+            this.trace.cartFinishesLoading(cart);
+        }
     }
 
     private *unload(cart: Cart, quantity: number) {
@@ -112,9 +129,18 @@ class Agent {
             const message = `cart ${cart.id} with ${cart.payload} does not have ${quantity} items to unload.`
             throw TypeError(message);
         }
+
+        if (this.trace) {
+            this.trace.cartBeginsUnloading(cart, quantity);
+        }
+
         const unloadingFinishedTime = this.clock.time + this.env.unloadTimeEstimator(cart.lastKnownLocation, quantity, this.clock.time);
         yield this.clock.until(unloadingFinishedTime);
         cart.payload -= quantity;
+
+        if (this.trace) {
+            this.trace.cartFinishesUnloading(cart);
+        }
     }
 
     private *waitUntil(resumeTime: SimTime) {

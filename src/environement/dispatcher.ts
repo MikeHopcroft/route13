@@ -1,5 +1,5 @@
 import { Clock } from './clock';
-import { Continuation } from './continuation';
+import { Continuation, NextStep } from './continuation';
 import { Environment } from './environment';
 import { AnyJob, SimTime } from '../types';
 
@@ -24,13 +24,13 @@ export class Dispatcher {
         }
     }
 
-    waitForJob() {
+    waitForJob(): NextStep {
         return (future: Continuation) => {
             this.env.jobAvailableCondition.sleep(future);
         }
     }
 
-    *introduceJob(job: AnyJob, time: SimTime) {
+    *introduceJob(job: AnyJob, time: SimTime): Continuation {
         // TODO: it is possible to introduce a job after its start time. Is this ok?
         // Should we log and throw?
         yield this.clock.until(time);

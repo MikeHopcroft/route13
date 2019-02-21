@@ -1,7 +1,9 @@
 import { Condition } from './condition'
 import { RoutePlanner } from '../planner';
+import { Trace, TextTrace } from './trace';
 import { AnyJob, Cart, CartId } from "../types";
 import { LoadTimeEstimator, RouteNextStep, TransitTimeEstimator, UnloadTimeEstimator } from '../types';
+
 
 /*
 Job initially enter the system via the event queue, using the introduceJob() method.
@@ -36,6 +38,8 @@ export class Environment {
     unloadTimeEstimator: UnloadTimeEstimator;
     transitTimeEstimator: TransitTimeEstimator;
 
+    trace: Trace | undefined;
+
     routePlanner: RoutePlanner;
 
     //
@@ -61,12 +65,14 @@ export class Environment {
         loadTimeEstimator: LoadTimeEstimator,
         unloadTimeEstimator: UnloadTimeEstimator,
         routeNextStep: RouteNextStep,
-        transitTimeEstimator: TransitTimeEstimator
+        transitTimeEstimator: TransitTimeEstimator,
+        trace: Trace | undefined
     ) {
         this.loadTimeEstimator = loadTimeEstimator;
         this.routeNextStep = routeNextStep;
         this.unloadTimeEstimator = unloadTimeEstimator;
         this.transitTimeEstimator = transitTimeEstimator;
+        this.trace = trace;
 
         this.fleet = new Map<CartId, Cart>();
         // TODO: initialize fleet.
@@ -84,6 +90,37 @@ export class Environment {
             this.loadTimeEstimator,
             this.unloadTimeEstimator,
             this.transitTimeEstimator);
+    }
+
+    assignJob(job: AnyJob, cart: Cart)
+    {
+        // Check for already assigned.
+        // Check for cart undefined.
+        job.assignedTo = cart.id;
+        this.assignedJobs.add(job);
+        if (this.trace) {
+            this.trace.jobAssigned(job);
+        }
+    }
+
+    completeJob(job: AnyJob)
+    {
+        // Check for job not already assigned.
+        this.assignedJobs.delete(job);
+        this.successfulJobs.push(job);
+        if (this.trace) {
+            this.trace.jobSucceeded(job);
+        }
+    }
+
+    failJob(job: AnyJob)
+    {
+        // Check for job not already assigned.
+        this.assignedJobs.delete(job);
+        this.failedJobs.push(job);
+        if (this.trace) {
+            this.trace.jobFailed(job);
+        }
     }
 }
 

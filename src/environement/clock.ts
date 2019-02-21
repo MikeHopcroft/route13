@@ -1,6 +1,6 @@
 import FastPriorityQueue from 'FastPriorityQueue';
 
-import { Continuation, resume } from './continuation';
+import { Continuation, NextStep, resume } from './continuation';
 import { SimTime } from '../types';
 
 interface Event {
@@ -14,7 +14,7 @@ export class Clock {
 
     constructor() {
         const eventComparator = (a: Event, b: Event) => a.time < b.time;
-        this.queue = new FastPriorityQueue<Event>(eventComparator);
+        this.queue = new FastPriorityQueue(eventComparator);
         this.time = 0;
     }
 
@@ -31,7 +31,7 @@ export class Clock {
         }
     }
 
-    until(time: SimTime) {
+    until(time: SimTime): NextStep {
         return (continuation: Continuation) => {
             this.queue.add({ time, continuation })
         }
