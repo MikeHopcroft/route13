@@ -1,4 +1,4 @@
-import { ActionType, AnyAction, DropoffAction, PickupAction, SuspendAction } from '../types'
+import { ActionType, AnyAction, DropoffAction, PickupAction, SuspendAction, TransferJobState, OutOfServiceJobState } from '../types'
 import { AnyJob, Cart, LocationId, SimTime } from '../types';
 import { Clock } from './clock';
 import { Continuation } from './continuation';
@@ -36,7 +36,9 @@ export class Agent {
             // Execute plan.
             if (plan) {
                 yield* this.actionSequence(cart, plan.actions);
-                this.env.completeJob(job);
+
+                // TODO: This call is only valid for plans with a single job. Should really be on the action.
+                // this.env.completeJob(job);
             }
             else {
                 // There is no plan that can complete this job.
@@ -76,12 +78,14 @@ export class Agent {
     private *pickup(cart: Cart, action: PickupAction) {
         yield* this.driveTo(cart, action.location);
         yield* this.waitUntil(cart, action.time);
+        action.job.state = TransferJobState.ENROUTE;
         yield* this.load(cart, action.quantity);
     }
 
     private *dropoff(cart: Cart, action: DropoffAction) {
         yield* this.driveTo(cart, action.location);
         yield* this.unload(cart, action.quantity);
+        this.env.completeJob(action.job);
     }
 
     private *suspend(cart: Cart, action: SuspendAction) {
@@ -91,7 +95,9 @@ export class Agent {
             this.trace.cartSuspendsService(cart);
         }
 
+        action.job.state = OutOfServiceJobState.ON_BREAK;
         yield* this.waitUntil(cart, action.resumeTime);
+        this.env.completeJob(action.job);
 
         if (this.trace) {
             this.trace.cartResumesService(cart);

@@ -1,5 +1,11 @@
 # TODO List
 
+* Agent updates job status
+* Functions to create each kind of job.
+* Agents
+    * Assign FIFO job as carts become available
+    * Assign nearest job as carts become available
+    * Assign best combination of jobs
 * Event that gathers stats like job completion counts.
 * Scenario of introducing pre-assigned jobs like out-of-service periods.
 * REPL
