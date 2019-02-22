@@ -85,7 +85,7 @@ export class Environment {
     assignJob(job: AnyJob, cart: Cart)
     {
         this.assignedJobs.add(job);
-        job.assignedTo = cart.id;
+        job.assignedTo = cart;
         if (this.trace) {
             this.trace.jobAssigned(job);
         }

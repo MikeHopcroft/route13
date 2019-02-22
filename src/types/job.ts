@@ -1,5 +1,5 @@
 import { LocationId, SimTime } from './types';
-import { CartId } from './cart';
+import { Cart } from './cart';
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -18,7 +18,7 @@ export interface Job {
     id: JobId;
     type: JobType;
 
-    assignedTo: CartId | null;
+    assignedTo: Cart | null;
 }
 
 // The OutOfServiceJob is mandatory and the scheduler treats it as a

@@ -135,21 +135,15 @@ export class TextTrace implements Trace {
     }
 
     jobAssigned(job: Job): void {
-        // Hack to create dummy cart from job.assignedTo.
-        const cart = job.assignedTo === null ? null : { id: job.assignedTo } as Cart; 
-        this.format(cart, `Job ${job.id} assigned to cart ${job.assignedTo}.`);
+        this.format(job.assignedTo, `Job ${job.id} assigned to cart ${job.assignedTo}.`);
     }
 
     jobSucceeded(job: Job): void {
-        // Hack to create dummy cart from job.assignedTo.
-        const cart = job.assignedTo === null ? null : { id: job.assignedTo } as Cart; 
-        this.format(cart, `Job ${job.id} succeeded.`);
+        this.format(job.assignedTo, `Job ${job.id} succeeded.`);
     }
 
     jobFailed(job: Job): void {
-        // Hack to create dummy cart from job.assignedTo.
-        const cart = job.assignedTo === null ? null : { id: job.assignedTo } as Cart; 
-        this.format(cart, `Job ${job.id} failed.`);
+        this.format(job.assignedTo, `Job ${job.id} failed.`);
     }
 
     plannerStarted(): void {
