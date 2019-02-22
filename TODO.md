@@ -9,9 +9,10 @@
 
 * Right now Dispatcher main loop not running. Dispatcher needs lots of work.
 * Unit Tests
-    * buildTrie
-    * Combinations
-    * Floyd-Warshall
+    * Figure out why descriptions are grouping tests (e.g. planner)
+    * . buildTrie - needs cleanup and commenting
+    * ~~Combinations~~
+    * ~~Floyd-Warshall~~
     * RoutePlanner
 * Comments for Environment, some way to create carts, initialize fleet
 * Comments for Agent

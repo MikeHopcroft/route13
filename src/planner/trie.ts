@@ -21,19 +21,3 @@ export function buildTrie(head: number[], tail: number[]): Trie {
     return children;
 }
 
-export function walkTrie(trie: Trie, actions: (string|null)[], head: string[]) {
-    let leafNode = true;
-
-    for (const branch of trie) {
-        const action = actions[branch.key];
-        if (action) {
-            leafNode = false;
-            const newHead = [...head, action];
-            walkTrie(branch.children, actions, newHead);
-        }
-    }
-
-    if (leafNode) {
-        console.log(head.join(''));
-    }
-}

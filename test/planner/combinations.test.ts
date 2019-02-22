@@ -1,8 +1,7 @@
 import { assert } from 'chai';
 import 'mocha';
-import { combinations } from '../../src/planner/combinations';
 
-// import { combinations } from '../../src/planner';
+import { combinations } from '../../src';
 
 
 describe('planner', () => {
