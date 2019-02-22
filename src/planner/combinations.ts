@@ -1,10 +1,12 @@
-
-export function* combinations(select: number, from: number) {
-    yield* generateCombinations(select, 0, from, []);
+// Generates the combinations of `select` integers from the set [0,from).
+export function* combinations(select: number, from: number): IterableIterator<number[]> {
+    if (select !== 0) {
+        yield* generateCombinations(select, 0, from, []);
+    }
 }
 
 function* generateCombinations(select: number, start: number, end: number, selection: number[]): IterableIterator<number[]> {
-    if (select == 0) {
+    if (select === 0) {
         yield [...selection];
     }
     else {
@@ -16,13 +18,3 @@ function* generateCombinations(select: number, start: number, end: number, selec
         }
     }
 }
-
-function go() {
-    let counter = 0;
-    for (const i of combinations(2,8)) {
-        ++counter;
-        console.log(`${counter}: ${i}`);
-    }
-}
-
-go();
