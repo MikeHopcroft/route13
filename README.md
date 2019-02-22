@@ -4,6 +4,10 @@
 [linear programming solvers](https://en.wikipedia.org/wiki/Linear_programming)
 and ML models. `Route13` scenarios include forklifts in warehouses, baggage carts at airports, and trucks on highways. Basically anything that involves workers or equipment moving loads over a network while satisfying constraints around delivery times, equipment capacities, and worker schedules.
 
+For information on how `Route13` works, please see the
+[architectural description](documentation/architecture.md) in the
+[documentation](documentation) folder.
+
 ## Try Route13
 
 `Route13` is a [Node.js](https://nodejs.org/en/) project,

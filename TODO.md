@@ -1,5 +1,7 @@
 # TODO List
 
+* Remove notes.txt
+* Clean up TODO.txt
 * Samples
     * Optimal route planning
         * ~~RoutePlanner.applyAction should not take cart parameter.~~
@@ -9,7 +11,7 @@
         * x Use chalk
     * Simulator log.
 * Floyd-Warshall
-    * Generate cost and next functions in proper form.
+    * ~~Generate cost and next functions in proper form.~~
     * ~~Unit test~~
     * Unit test with new route
     * ~~Documentation~~
@@ -19,6 +21,8 @@
     * Instructions
     * Explain Flyod-Warshall
     * Overview
+    * Architectural document
+    * How to use library.
 * Event that gathers stats like job completion counts.
 * JSON tracing
 * Set up travis ci

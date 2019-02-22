@@ -1,9 +1,10 @@
 # Coding Guidelines
 
 ## General
-* Uses Typescript.
-* Unit tests based on Mocha/Chai.
-* CI uses Travis. Successful CI requires clean build and unit tests passing.
+* Uses [TypeScript](https://www.typescriptlang.org/).
+* Unit tests based on [Mocha](https://www.npmjs.com/package/mocha) and 
+[Chai](https://www.npmjs.com/package/chai).
+* CI uses [Travis](https://travis-ci.com). Successful CI requires clean build and unit tests passing.
 
 ## Naming Conventions
 * Class names are PascalCase.
