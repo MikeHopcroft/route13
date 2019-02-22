@@ -1,5 +1,5 @@
-import { AnyJob, Cart, LocationId, SimTime } from '../src/types';
-import { Agent, Clock, Dispatcher, Environment, JobFactory, resume, TextTrace } from '../src';
+import { AnyJob, LocationId, SimTime } from '../src/types';
+import { Agent, Clock, Dispatcher, Environment, JobFactory, start, TextTrace } from '../src';
 import { CartFactory } from '../src';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -45,23 +45,26 @@ function go() {
     );
 
     // The Dispatcher class assigns Jobs to workers.
-    const dispatcher = new Dispatcher(clock, environment);
+    const dispatcher = new Dispatcher(clock, environment, trace);
 
     // The Agent issues the commands that perform jobs that have been assigned.
     const agent = new Agent(clock, dispatcher, environment, trace);
 
-    // Create 3 carts in the Environment and have the Agent spin up one worker
-    // for each.
+    //
+    // Create 3 carts
+    //
     const cartFactory = new CartFactory();
     const cartCount = 3;
     for (let i = 0; i < cartCount; ++i) {
         // Create a cart, add it to the environment, and start a worker.
         const cart = cartFactory.cart(10, 0);
         environment.addCart(cart);
-        resume(agent.newWorker(cart));
+        start(agent.workerLoop(cart));
     }
 
+    //
     // Construct a list of jobs.
+    //
     const jobFactory = new JobFactory();
     const jobs: AnyJob[] = [
         // Move 5 items from location 2 to 10 between the times 300 and 3000.
@@ -77,17 +80,28 @@ function go() {
         jobFactory.transfer(7, 8, 1300, 4, 3000)
     ];
 
-    // Make the dispatcher aware of all of the Jobs at time zero.
+    // Starting at time zero, make the dispatcher aware of all of the Jobs on
+    // the list. In a real simulation, the jobs would likely trickle in,
+    // one-by-one, over a period of time.
     const introduceAt: SimTime = 0;
     for (const job of jobs) {
-        resume(dispatcher.introduceJob(job, introduceAt));
+        start(dispatcher.introduceJob(job, introduceAt));
     }
+
+    // Start the dispatcher's planning loop.
+    // This loop will run until the dispatcher is shut down.
+    start(dispatcher.planningLoop());
+
+    // Shut down the dispatcher at 16000.
+    start(dispatcher.shutdownAt(16000));
+
 
     // Kick off the simulation.
     clock.mainloop();
 
     console.log('Simulation ended.');
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -142,5 +156,10 @@ function unloadTimeEstimator(location: LocationId, quantity: number, startTime: 
     return 2 * quantity;
 }
 
-// Run the simulation!
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Program entry point. Run the simulation!
+//
+///////////////////////////////////////////////////////////////////////////////
 go();

@@ -21,9 +21,9 @@ export type NextStep = (continuation: IterableIterator<NextStep>) => void;
 // A worker is modeled as a Continuation, which is a generator of NextSteps.
 export type Continuation = IterableIterator<NextStep>;
 
-// The resume function wakes up a worker/Continuation and then schedules its
+// The start function wakes up a worker/Continuation and then schedules its
 // next step.
-export function resume(continuation: Continuation) {
+export function start(continuation: Continuation) {
     const { done, value } = continuation.next();
     const schedule = value;
     if (!done) {

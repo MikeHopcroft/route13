@@ -6,6 +6,7 @@ import { Dispatcher } from './dispatcher';
 import { Environment } from './environment';
 import { Trace } from './trace';
 
+// The Agent orchestrates the sequences of Actions to complete a set of Jobs.
 export class Agent {
     private clock: Clock;
     private dispatcher: Dispatcher;
@@ -19,9 +20,10 @@ export class Agent {
         this.trace = trace;
     }
 
-    // Simple agent processes one job at a time.
-    // When finished, grabs next unassigned job in FIFO order.
-    *newWorker(cart: Cart): Continuation {
+    // Worker/Continuation that operates a single cart.
+    // Processes one job at a time. When finished, grabs next unassigned Job
+    // from the Dispatcher.
+    *workerLoop(cart: Cart): Continuation {
         while (true) {
             // Wait for a job to become available.
             yield this.dispatcher.waitForJob();
@@ -44,6 +46,7 @@ export class Agent {
         }
     }
 
+    // Worker/Continuation to execute a sequence of Actions.
     private *actionSequence(cart: Cart, actions: AnyAction[]) {
         for (const action of actions) {
             // TODO: before each action, check to see if there is a new action sequence.
@@ -51,6 +54,7 @@ export class Agent {
         }
     }
 
+    // Worker/Continuation to execute a single Action.
     private *action(cart: Cart, action: AnyAction) {
         // DESIGN NOTE: could eliminate this switch statement if Actions were classes.
         switch (action.type) {
@@ -72,6 +76,7 @@ export class Agent {
         }
     }
 
+    // Worker/Continuation that picks up a load.
     private *pickup(cart: Cart, action: PickupAction) {
         yield* this.driveTo(cart, action.location);
         yield* this.waitUntil(cart, action.time);
@@ -79,12 +84,14 @@ export class Agent {
         yield* this.load(cart, action.quantity);
     }
 
+    // Worker/Continuation that drops off a load.
     private *dropoff(cart: Cart, action: DropoffAction) {
         yield* this.driveTo(cart, action.location);
         yield* this.unload(cart, action.quantity);
         this.env.completeJob(action.job);
     }
 
+    // Worker/Continuation that takes a cart out of service.
     private *suspend(cart: Cart, action: SuspendAction) {
         yield* this.driveTo(cart, action.location);
 
@@ -94,13 +101,14 @@ export class Agent {
 
         action.job.state = OutOfServiceJobState.ON_BREAK;
         yield* this.waitUntil(cart, action.resumeTime);
-        this.env.completeJob(action.job);
 
         if (this.trace) {
             this.trace.cartResumesService(cart);
         }
+        this.env.completeJob(action.job);
     }
 
+    // Worker/Continuation that drive a cart to a specified destination.
     private *driveTo(cart: Cart, destination: LocationId) {
         const start = cart.lastKnownLocation;
         while (cart.lastKnownLocation !== destination) {
@@ -124,6 +132,7 @@ export class Agent {
         }
     }
 
+    // Worker/Continuation that loads items.
     private *load(cart: Cart, quantity: number) {
         if (cart.payload + quantity > cart.capacity) {
             const message = `cart ${cart.id} with ${cart.payload} will exceed capacity loading ${quantity} items.`
@@ -143,6 +152,7 @@ export class Agent {
         }
     }
 
+    // Worker/Continuation that unloads items.
     private *unload(cart: Cart, quantity: number) {
         if (cart.payload < quantity) {
             const message = `cart ${cart.id} with ${cart.payload} does not have ${quantity} items to unload.`
@@ -162,6 +172,7 @@ export class Agent {
         }
     }
 
+    // Worker/Continuation that waits until a specified time.
     private *waitUntil(cart: Cart, resumeTime: SimTime) {
         if (this.clock.time < resumeTime) {
             if (this.trace) {

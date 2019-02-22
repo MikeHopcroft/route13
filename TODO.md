@@ -1,6 +1,18 @@
 # TODO List
 
+* Dispatcher
+    * ~~Seems like waitForJob() should be an Environment method.
+      Either that or jobAvailableCondition should move to Dispatcher.~~
+    * Distinction between Dispatcher and Environment not clear.
+    * Are Jobs even part of the environment? Why even have an environment?
+    * Consider making a class that combines unassignedJobs with jobAvailableCondition.wakeOne()?
 
+* Right now Dispatcher main loop not running. Dispatcher needs lots of work.
+* Unit Tests
+    * buildTrie
+    * Combinations
+    * Floyd-Warshall
+    * RoutePlanner
 * Comments for Environment, some way to create carts, initialize fleet
 * Comments for Agent
 * Comments for Dispatcher
@@ -38,15 +50,10 @@
 * Set up travis ci
 * ~~Remove unused packages from packages.json~~
 * Figure out postcompile in packages.json
-* Unit Tests
-    * buildTrie
-    * Combinations
-    * Floyd-Warshall
-    * RoutePlanner
 
 
-* Job.assignedTo should be of type Cart, rather than number.
-* Functions to create each kind of job.
+* ~~Job.assignedTo should be of type Cart, rather than number.~~
+* ~~Functions to create each kind of job.~~
 * Scenario of introducing pre-assigned jobs like out-of-service periods.
 
 * Agent updates job status

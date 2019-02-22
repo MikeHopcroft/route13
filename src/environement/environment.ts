@@ -1,6 +1,5 @@
-import { Condition } from './condition'
 import { RoutePlanner } from '../planner';
-import { Trace, TextTrace } from './trace';
+import { Trace } from './trace';
 import { AnyJob, Cart, CartId } from "../types";
 import { LoadTimeEstimator, RouteNextStep, TransitTimeEstimator, UnloadTimeEstimator } from '../types';
 
@@ -36,12 +35,25 @@ export class Environment {
     // Job related
     //
     unassignedJobs: AnyJob[];
-    jobAvailableCondition: Condition;
 
     assignedJobs: Set<AnyJob>;
     successfulJobs: AnyJob[];
     failedJobs: AnyJob[];
 
+    // Environment constructor parameters:
+    //
+    //   loadTimeEstimator
+    //      function that estimate the time required to load a specified quantity
+    //   unloadTimeEstimator
+    //      function that estimate the time required to unload a specified quantity
+    //   routeNextStep
+    //      function that returns the next LocationId on a route
+    //   transitTimeEstimator
+    //      function that returns the time required to drive from a specific
+    //      LocationId to another LocationId.
+    //
+    //   trace
+    //      optional object that logs simulator operations.
     constructor(
         loadTimeEstimator: LoadTimeEstimator,
         unloadTimeEstimator: UnloadTimeEstimator,
@@ -58,7 +70,6 @@ export class Environment {
         this.fleet = new Map<CartId, Cart>();
 
         this.unassignedJobs = [];
-        this.jobAvailableCondition = new Condition();
 
         this.assignedJobs = new Set<AnyJob>();
         this.successfulJobs = [];
@@ -72,6 +83,8 @@ export class Environment {
             this.transitTimeEstimator);
     }
 
+    // Adds a cart to the environment.
+    // Once added, a cart cannot be removed, but it can be placed out of service.
     addCart(cart: Cart) {
         if (this.fleet.has(cart.id)) {
             const message = `Fleet already has Cart ${cart.id}`;

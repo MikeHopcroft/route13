@@ -2,7 +2,7 @@
 //import FastPriorityQueue from 'fastpriorityqueue';
 var FastPriorityQueue = require("fastpriorityqueue");
 
-import { Continuation, NextStep, resume } from './continuation';
+import { Continuation, NextStep, start } from './continuation';
 import { SimTime } from '../types';
 
 // The main event loop is driven by the Clock.
@@ -26,7 +26,7 @@ export class Clock {
             const event = this.queue.poll();
             if (event) {
                 this.time = event.time;
-                resume(event.continuation);
+                start(event.continuation);
             }
             else {
                 break;

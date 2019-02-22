@@ -1,4 +1,4 @@
-import { Continuation, resume } from './continuation';
+import { Continuation, start } from './continuation';
 
 // Conditions hold suspended worker/Continuations until a certain condition
 // is met. They are analogous to condition variables used in multi-threaded
@@ -22,7 +22,7 @@ export class Condition {
     sleep(iterator: Continuation) {
         if (this.pendingWakeups > 0) {
             --this.pendingWakeups;
-            resume(iterator);
+            start(iterator);
         }
         else {
             this.continuations.push(iterator);
@@ -42,7 +42,7 @@ export class Condition {
     wakeOne() {
         const iterator = this.continuations.shift();
         if (iterator) {
-            resume(iterator);
+            start(iterator);
         }
         else {
             ++this.pendingWakeups;
