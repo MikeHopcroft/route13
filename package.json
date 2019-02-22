@@ -5,14 +5,14 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MikeHopcroft/routex.git"
+    "url": "git+https://github.com/MikeHopcroft/route13.git"
   },
   "author": "Michael Hopcroft",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/MikeHopcroft/routex/issues"
+    "url": "https://github.com/MikeHopcroft/route13/issues"
   },
-  "homepage": "https://github.com/MikeHopcroft/routex#readme",
+  "homepage": "https://github.com/MikeHopcroft/route13#readme",
   "scripts": {
     "test": "mocha",
     "check": "gts check",

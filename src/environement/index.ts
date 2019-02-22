@@ -4,4 +4,5 @@ export * from './condition';
 export * from './continuation';
 export * from './dispatcher';
 export * from './environment';
+export * from './job-factory';
 export * from './trace';

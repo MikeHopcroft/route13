@@ -60,7 +60,7 @@ function go() {
     const maxJobs = 3;
 
     // Log planner output to console.
-    const logger = (text: string) => { console.log(text); };
+    const logger = console.log;
 
     // Construct the planner.
     const planner = new RoutePlanner(maxJobs, loadTimeEstimator, unloadTimeEstimator, transitTimeEstimator, logger);
