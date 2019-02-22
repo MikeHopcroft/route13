@@ -1,5 +1,6 @@
 import { AnyJob, Cart, LocationId, SimTime } from '../src/types';
 import { Agent, Clock, Dispatcher, Environment, JobFactory, resume, TextTrace } from '../src';
+import { CartFactory } from '../src';
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -35,7 +36,7 @@ function go() {
     //   3. status of known Jobs, e.g. moving items from place to place within
     //      a certain time window, going out of service for 15 minutes to
     //      refuel, etc.
-    const env = new Environment(
+    const environment = new Environment(
         loadTimeEstimator,
         unloadTimeEstimator,
         routeNextStep,
@@ -44,47 +45,42 @@ function go() {
     );
 
     // The Dispatcher class assigns Jobs to workers.
-    const dispatcher = new Dispatcher(clock, env);
+    const dispatcher = new Dispatcher(clock, environment);
 
     // The Agent issues the commands that perform jobs that have been assigned.
-    const agent = new Agent(clock, dispatcher, env, trace);
+    const agent = new Agent(clock, dispatcher, environment, trace);
 
-    // Have the agent spin up 3 new workers, each with a cart.
+    // Create 3 carts in the Environment and have the Agent spin up one worker
+    // for each.
+    const cartFactory = new CartFactory();
     const cartCount = 3;
     for (let i = 0; i < cartCount; ++i) {
-        // Create a cart.
-        const cart: Cart = {
-            id: i,
-            capacity: 10,
-            payload: 0,
-            lastKnownLocation: 0
-        };
-
-        // Start an worker for this cart.
+        // Create a cart, add it to the environment, and start a worker.
+        const cart = cartFactory.cart(10, 0);
+        environment.addCart(cart);
         resume(agent.newWorker(cart));
     }
 
     // Construct a list of jobs.
-    const factory = new JobFactory();
+    const jobFactory = new JobFactory();
     const jobs: AnyJob[] = [
         // Move 5 items from location 2 to 10 between the times 300 and 3000.
-        factory.transfer(5, 2, 300, 10, 3000),
+        jobFactory.transfer(5, 2, 300, 10, 3000),
 
         // Move 5 items from location 3 to 4 between the times 300 and 3000.
-        factory.transfer(5, 3, 300, 4, 3000),
+        jobFactory.transfer(5, 3, 300, 4, 3000),
 
         // Go out of service at location 7 between the times 3000 and 4000.
-        factory.outOfService(7, 3000, 4000),
+        jobFactory.outOfService(7, 3000, 4000),
 
         // Move 7 items from location 8 to 4 between the times 1300 and 3000.
-        factory.transfer(7, 8, 1300, 4, 3000)
+        jobFactory.transfer(7, 8, 1300, 4, 3000)
     ];
 
-    // Make the dispatcher aware the Jobs.
+    // Make the dispatcher aware of all of the Jobs at time zero.
+    const introduceAt: SimTime = 0;
     for (const job of jobs) {
-        // TODO: uniform method to know job starting time.
-        // For now, introduce all jobs at time 0.
-        resume(dispatcher.introduceJob(job, 0));
+        resume(dispatcher.introduceJob(job, introduceAt));
     }
 
     // Kick off the simulation.

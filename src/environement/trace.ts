@@ -3,6 +3,11 @@ import chalk, { Chalk, ColorSupport } from 'chalk';
 import { Cart, Job, LocationId, SimTime } from '../types';
 import { Clock } from './clock';
 
+// The Trace interface provides methods for agents, dispatchers, and the
+// environment to log information about the simultion.
+// DESIGN NOTE: using a structured tracing API (instead of free form text)
+// allows other programs to analyze traces that would be too long for humans
+// to understand.
 export interface Trace {
     cartArrives(cart: Cart): void;
     cartPasses(cart: Cart): void;
@@ -28,12 +33,45 @@ export interface Trace {
     plannerFinished(): void;
 }
 
+// The TextTrace class logs trace information to the console in human-readable,
+// colorized format. In the output, lines relating to the same Cart will have
+// the same color.
+//
+// NOTE: the Chalk package is used to provide colors in the console output.
+// Node must be started with "--colors" command-line argument to enable the
+// display of colored text. Here's an example launch.json fragment:
+// {
+//     "type": "node",
+//     "request": "launch",
+//     "name": "Simulator demo",
+//     "program": "${workspaceFolder}/build/samples/simulator-demo.js",
+//     "args": [ "--colors" ]
+// }
 export class TextTrace implements Trace {
     clock: Clock;
     output: (text: string) => void;
 
-    colors = [  chalk.red, chalk.green, chalk.blue, chalk.yellow ];
+    colors = [
+        chalk.red,
+        chalk.green,
+        chalk.blue,
+        chalk.yellow,
+        chalk.magenta,
+        chalk.cyan,
+        chalk.redBright,
+        chalk.greenBright,
+        chalk.blueBright,
+        chalk.yellowBright,
+        chalk.magentaBright,
+        chalk.cyanBright
+    ];
 
+    // TextTrace constructor parameters:
+    // clock
+    //    Used to display current time at the start of each line.
+    // output
+    //    Function to display output. Use console.log to display
+    //    to the console.
     constructor(clock: Clock, output: (text: string) => void) {
         this.clock = clock;
         this.output = output;

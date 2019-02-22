@@ -8,6 +8,7 @@ import { LocationId } from './types';
 
 export type CartId = number;
 
+// A Cart transports items from one location to another.
 export interface Cart {
     id: CartId;
 
@@ -16,6 +17,8 @@ export interface Cart {
 
     // Amount of capacity currenty in use.
     payload: number;
+
+    // Last known location of the cart.
     lastKnownLocation: LocationId;
 
     // DESIGN NOTE: information about jobs currently assigned to a cart is

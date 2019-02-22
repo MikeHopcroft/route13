@@ -5,30 +5,15 @@ import { AnyJob, Cart, CartId } from "../types";
 import { LoadTimeEstimator, RouteNextStep, TransitTimeEstimator, UnloadTimeEstimator } from '../types';
 
 
-/*
-Job initially enter the system via the event queue, using the introduceJob() method.
-At the specified time, an introduced job becomes visible to the environment and is added to the backlog.
-Jobs on the backlog may or may not be assigned to a cart at any given time.
-
-The input to the planner consists of the job backlog, and the states of each of the carts.
-The planner generates a job assignment, which consists of a set of jobs for each cart.
-The new job assignment will always maintain the assignments of jobs that have already been started.
-
-The new job assignment is merged with the current job assignment to produce the assignment, moving forward.
-
-Race condition:
-Cart is assigned A, B, C.
-Cart starts on A.
-    Planner starts.
-    Cart finishes A and starts on B.
-    Planner finishes with assignment A, C, D.
-    How does cart merge [A, B, C] with [A, C, D]?
-        Challenge: [C, D] might not be appropriate for cart doing B.
-        Challenge: Taking the union of old and new assignments might make very complicated plan.
-
-Idea: planner assumes cart has dibs on any task that can be started in planning window.
-*/
-
+// The Environment class holds the state of the world. This state includes
+//   1. estimator functions that model physical activities in the world,
+//      e.g. the time required to move from one place to another, the time
+//      needed to load items onto a cart, etc.
+//   2. locations of items like Carts and their capacities and current
+//      payloads.
+//   3. status of known Jobs, e.g. moving items from place to place within
+//      a certain time window, going out of service for 15 minutes to
+//      refuel, etc.
 export class Environment {
     //
     // Estimators and routing.
@@ -38,7 +23,7 @@ export class Environment {
     unloadTimeEstimator: UnloadTimeEstimator;
     transitTimeEstimator: TransitTimeEstimator;
 
-    trace: Trace | undefined;
+    private trace: Trace | undefined;
 
     routePlanner: RoutePlanner;
 
@@ -57,10 +42,6 @@ export class Environment {
     successfulJobs: AnyJob[];
     failedJobs: AnyJob[];
 
-
-
-    // TODO: need some way to pass initial cart state.
-
     constructor(
         loadTimeEstimator: LoadTimeEstimator,
         unloadTimeEstimator: UnloadTimeEstimator,
@@ -75,7 +56,6 @@ export class Environment {
         this.trace = trace;
 
         this.fleet = new Map<CartId, Cart>();
-        // TODO: initialize fleet.
 
         this.unassignedJobs = [];
         this.jobAvailableCondition = new Condition();
@@ -92,12 +72,20 @@ export class Environment {
             this.transitTimeEstimator);
     }
 
+    addCart(cart: Cart) {
+        if (this.fleet.has(cart.id)) {
+            const message = `Fleet already has Cart ${cart.id}`;
+            throw TypeError(message);
+        }
+        this.fleet.set(cart.id, cart);
+    }
+
+    // Marks a job as being assigned to a Cart and adds the job to the set
+    // of assigned jobs.
     assignJob(job: AnyJob, cart: Cart)
     {
-        // Check for already assigned.
-        // Check for cart undefined.
-        job.assignedTo = cart.id;
         this.assignedJobs.add(job);
+        job.assignedTo = cart.id;
         if (this.trace) {
             this.trace.jobAssigned(job);
         }
@@ -123,8 +111,3 @@ export class Environment {
         }
     }
 }
-
-        //     logger(`PICKUP ${action.quantity} bags at gate ${action.location} after ${action.time} (job ${action.job.id})`);
-        //     logger(`    ${state.time}: drive for ${transitTime}s to gate ${action.location}`);
-        //     logger(`    ${state.time}: wait ${waitTime}s until ${action.time}`);
-        //     logger(`    ${state.time}: load ${action.quantity} bags in ${loadTime}s.`);

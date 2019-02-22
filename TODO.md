@@ -1,5 +1,15 @@
 # TODO List
 
+
+* Comments for Environment, some way to create carts, initialize fleet
+* Comments for Agent
+* Comments for Dispatcher
+* FastPriorityQueue - doesn't work with TS
+* Linter
+* CODING.md
+    * import ordering
+    * Use of exceptions
+    * Logging strategy
 * Remove notes.txt
 * Clean up TODO.txt
 * Samples
