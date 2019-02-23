@@ -1,7 +1,7 @@
 {
-  "name": "route-x",
+  "name": "route13",
   "version": "0.0.1",
-  "description": "Simulator framework for transportation network optimization.",
+  "description": "Framework for building simulators and optimizers for transportation networks.",
   "main": "index.js",
   "repository": {
     "type": "git",

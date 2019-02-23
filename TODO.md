@@ -1,7 +1,10 @@
 # TODO List
 
-* Architectural diagrams
-* csvTextTrace
+* Separate core from simulator
+* ~~Rename repo~~
+* NPM package, .npmignore
+* Architectural diagrams - use Illustrator?
+* x csvTextTrace, structuredTrace, jsonTrace
 * readonly and private keywords
 
 * Dispatcher
