@@ -1,7 +1,7 @@
 import { Continuation, start } from './continuation';
 
-// Conditions hold suspended worker/Continuations until a certain condition
-// is met. They are analogous to condition variables used in multi-threaded
+// Conditions hold suspended Continuations until a certain condition has been
+// met. Conditions are analogous to condition variables used in multi-threaded
 // programming.
 export class Condition {
     // Continuations currently waiting.

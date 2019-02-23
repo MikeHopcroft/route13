@@ -5,15 +5,15 @@ import { Environment } from './environment';
 import { Trace } from './trace';
 import { AnyJob, SimTime } from '../types';
 
-// The Dispatcher class assigns Jobs to workers/Continuations.
+// The Dispatcher class assigns Jobs to Drivers.
 //
-// This naive implementation maintains a queue of jobs that have been
+// The current, naive implementation maintains a queue of jobs that have been
 // introduced to the system. These jobs are assigned to carts as the carts
 // become available.
 //
-// DESIGN INTENT is to replace thie Dispatcher with a more sophisticated one
-// that considers the set of Plans associated with the cross products of Carts
-// and tuples of unassigned Jobs.
+// DESIGN INTENT is to replace this Dispatcher with a more sophisticated one
+// that chooses job assignments from the set of Plans associated with the cross
+// products of Carts and tuples of unassigned Jobs.
 export class Dispatcher {
     private clock: Clock;
     private env: Environment;
@@ -64,7 +64,7 @@ export class Dispatcher {
         this.jobAvailableCondition.wakeOne();
     }
 
-    // Worker/Continuation for main planning loop.
+    // Continuation the runs main planning loop.
     // NOTE: Currently the planner does nothing, but the loop runs to
     // demonstrate the pattern.
     *planningLoop() {
@@ -73,8 +73,7 @@ export class Dispatcher {
         }
     }
 
-    // Worker/Continuation that runs the planner once and updates job
-    // assignments.
+    // Continuation that runs the planner once and updates job assignments.
     // NOTE: Currently the planner does nothing but log to trace.
     private *updateJobAssignments() {
         if (!this.shuttingDown) {
@@ -100,8 +99,7 @@ export class Dispatcher {
         }
     }
 
-    // Worker/Continuation that shuts down the planning loop at a specified
-    // time.
+    // Continuation that shuts down the planning loop at a specified time.
     *shutdownAt(time: SimTime) {
         yield this.clock.until(time);
         this.shuttingDown = true;

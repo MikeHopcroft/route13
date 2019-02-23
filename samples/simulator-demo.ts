@@ -44,7 +44,7 @@ function go() {
         trace
     );
 
-    // The Dispatcher class assigns Jobs to workers.
+    // The Dispatcher class assigns Jobs to Drivers.
     const dispatcher = new Dispatcher(clock, environment, trace);
 
     // The Driver performs the sequence of Actions necessary to complete the
@@ -57,7 +57,7 @@ function go() {
     const cartFactory = new CartFactory();
     const cartCount = 3;
     for (let i = 0; i < cartCount; ++i) {
-        // Create a cart, add it to the environment, and start a worker.
+        // Create a cart, add it to the environment, and start a driver.
         const cart = cartFactory.cart(10, 0);
         environment.addCart(cart);
         start(driver.drive(cart));

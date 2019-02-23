@@ -1,5 +1,9 @@
 # TODO List
 
+* Architectural diagrams
+* csvTextTrace
+* readonly and private keywords
+
 * Dispatcher
     * ~~Seems like waitForJob() should be an Environment method.
       Either that or jobAvailableCondition should move to Dispatcher.~~
@@ -7,7 +11,7 @@
     * Are Jobs even part of the environment? Why even have an environment?
     * Consider making a class that combines unassignedJobs with jobAvailableCondition.wakeOne()?
 
-* Right now Dispatcher main loop not running. Dispatcher needs lots of work.
+* ~~Right now Dispatcher main loop is not running. Dispatcher needs lots of work.~~
 * Unit Tests
     * Figure out why descriptions are grouping tests (e.g. planner)
     * . buildTrie - needs cleanup and commenting
@@ -15,7 +19,7 @@
     * ~~Floyd-Warshall~~
     * RoutePlanner
 * Comments for Environment, some way to create carts, initialize fleet
-* Comments for Agent
+* Comments for Agent/Driver
 * Comments for Dispatcher
 * FastPriorityQueue - doesn't work with TS
 * Linter

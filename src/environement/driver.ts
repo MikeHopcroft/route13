@@ -21,9 +21,9 @@ import { Trace } from './trace';
         this.trace = trace;
     }
 
-    // Worker/Continuation that operates a single cart.
-    // Processes one job at a time. When finished, grabs next unassigned Job
-    // from the Dispatcher.
+    // Continuation that continuosly operates a single cart.
+    // Current implementation processes one job at a time.
+    // When finished, grabs next unassigned Job from the Dispatcher.
     *drive(cart: Cart): Continuation {
         while (true) {
             // Wait for a job to become available.
@@ -38,7 +38,7 @@ import { Trace } from './trace';
 
             // Execute plan.
             if (plan) {
-                yield* this.actionSequence(cart, plan.actions);
+                yield* this.performActionSequence(cart, plan.actions);
             }
             else {
                 // There is no plan for this cart to complete this job.
@@ -47,16 +47,16 @@ import { Trace } from './trace';
         }
     }
 
-    // Worker/Continuation to execute a sequence of Actions.
-    private *actionSequence(cart: Cart, actions: AnyAction[]) {
+    // Continuation that performs a sequence of Actions.
+    private *performActionSequence(cart: Cart, actions: AnyAction[]) {
         for (const action of actions) {
             // TODO: before each action, check to see if there is a new action sequence.
-            yield* this.action(cart, action);
+            yield* this.performOneAction(cart, action);
         }
     }
 
-    // Worker/Continuation to execute a single Action.
-    private *action(cart: Cart, action: AnyAction) {
+    // Continuation that performs a single Action.
+    private *performOneAction(cart: Cart, action: AnyAction) {
         // DESIGN NOTE: could eliminate this switch statement if Actions were classes.
         switch (action.type) {
             case ActionType.DROPOFF:
@@ -69,15 +69,13 @@ import { Trace } from './trace';
                 yield* this.suspend(cart, action);
                 break;
             default:
-                // TODO: should generators return error/success?
-                // What would the event loop do with this information?
                 // Should never get here. Log and throw.
                 const message = `Unknown action type ${(action as AnyAction).type}`;
                 throw TypeError(message);
         }
     }
 
-    // Worker/Continuation that picks up a load.
+    // Continuation that picks up a load from a location.
     private *pickup(cart: Cart, action: PickupAction) {
         yield* this.driveTo(cart, action.location);
         yield* this.waitUntil(cart, action.time);
@@ -85,14 +83,14 @@ import { Trace } from './trace';
         yield* this.load(cart, action.quantity);
     }
 
-    // Worker/Continuation that drops off a load.
+    // Continuation that drops a load off at a location.
     private *dropoff(cart: Cart, action: DropoffAction) {
         yield* this.driveTo(cart, action.location);
         yield* this.unload(cart, action.quantity);
         this.env.completeJob(action.job);
     }
 
-    // Worker/Continuation that takes a cart out of service.
+    // Continuation that takes a cart out of service for a period of time.
     private *suspend(cart: Cart, action: SuspendAction) {
         yield* this.driveTo(cart, action.location);
 
@@ -109,7 +107,7 @@ import { Trace } from './trace';
         this.env.completeJob(action.job);
     }
 
-    // Worker/Continuation that drive a cart to a specified destination.
+    // Continuation that drives a cart to a specified destination.
     private *driveTo(cart: Cart, destination: LocationId) {
         const start = cart.lastKnownLocation;
         while (cart.lastKnownLocation !== destination) {
@@ -133,7 +131,7 @@ import { Trace } from './trace';
         }
     }
 
-    // Worker/Continuation that loads items.
+    // Continuation that loads items onto a cart.
     private *load(cart: Cart, quantity: number) {
         if (cart.payload + quantity > cart.capacity) {
             const message = `cart ${cart.id} with ${cart.payload} will exceed capacity loading ${quantity} items.`
@@ -153,7 +151,7 @@ import { Trace } from './trace';
         }
     }
 
-    // Worker/Continuation that unloads items.
+    // Continuation that unloads items from a cart.
     private *unload(cart: Cart, quantity: number) {
         if (cart.payload < quantity) {
             const message = `cart ${cart.id} with ${cart.payload} does not have ${quantity} items to unload.`
@@ -173,7 +171,7 @@ import { Trace } from './trace';
         }
     }
 
-    // Worker/Continuation that waits until a specified time.
+    // Continuation that waits until a specified time.
     private *waitUntil(cart: Cart, resumeTime: SimTime) {
         if (this.clock.time < resumeTime) {
             if (this.trace) {

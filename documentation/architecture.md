@@ -18,5 +18,5 @@ THIS DOCUMENT IS CURRENTLY A WORK IN PROGRESS
 
 # Driver (an Agent)
 
-# Worker Continuation Model
+# Worker/Agent Continuation Model
 
