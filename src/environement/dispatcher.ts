@@ -1,6 +1,4 @@
-import { Clock } from './clock';
-import { Condition } from './condition'
-import { Continuation, NextStep } from './continuation';
+import { Clock, Condition, Continuation, NextStep } from '../core';
 import { Environment } from './environment';
 import { Trace } from './trace';
 import { AnyJob, SimTime } from '../types';

@@ -1,7 +1,7 @@
 import chalk, { Chalk, ColorSupport } from 'chalk';
 
 import { Cart, Job, LocationId, SimTime } from '../types';
-import { Clock } from './clock';
+import { Clock } from '../core';
 
 // The Trace interface provides methods for agents, dispatchers, and the
 // environment to log information about the simultion.
