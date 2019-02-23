@@ -1,23 +1,9 @@
+import { AnyJob, Cart, Environment, OutOfServiceJobState, Trace, TransferJobState } from '../environement';
+import { ActionType, AnyAction, DropoffAction, PickupAction, SuspendAction } from '../planner';
+import { LocationId, SimTime } from '../types';
+
 import { Clock, Continuation } from '../core';
 import { Dispatcher } from './dispatcher';
-import {
-    AnyJob,
-    Cart,
-    Environment,
-    OutOfServiceJobState,
-    Trace,
-    TransferJobState
-} from '../environement';
-import {
-    ActionType,
-    AnyAction,
-    DropoffAction,
-    LocationId,
-    PickupAction,
-    SimTime,
-    SuspendAction
-} from '../types';
-
 
 // The Driver performs the sequence of Actions necessary to complete the
 // set of assigned Jobs.
