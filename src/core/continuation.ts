@@ -1,4 +1,4 @@
-// Workers are modelled as generator functions that perform some work and then
+// Agents are modelled as generator functions that perform some work and then
 // yield their NextStep. The next step may be scheduled for a particular time
 // in the future, e.g.
 //
@@ -9,7 +9,7 @@
 //   yield dispatcher.waitForJob()  // Yield until there is a job available.
 //
 // These generator functions, which are called Continuations, return NextSteps
-// which instruct the system when to process the worker's next step.
+// which instruct the system when to process the agent's next step.
 //
 // In the example, above, clock.until() returns a NextStep function that places
 // the Continuation back on the event queue.
@@ -22,7 +22,7 @@
 // the future or when some condition becomes true.
 export type NextStep = (continuation: IterableIterator<NextStep>) => void;
 
-// A worker is modeled as a Continuation, which is a generator of NextSteps.
+// An agent is modeled as a Continuation, which is a generator of NextSteps.
 export type Continuation = IterableIterator<NextStep>;
 
 // The start function wakes up a Continuation and then schedules its next step.
