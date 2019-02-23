@@ -1,7 +1,7 @@
 import { AnyJob, Cart, CartId } from "../environement";
+import { LoadTimeEstimator, RouteNextStep, TransitTimeEstimator, UnloadTimeEstimator } from '../estimators';
 import { RoutePlanner } from '../planner';
 import { Trace } from './trace';
-import { LoadTimeEstimator, RouteNextStep, TransitTimeEstimator, UnloadTimeEstimator } from '../types';
 
 
 // The Environment class holds the state of the world. This state includes

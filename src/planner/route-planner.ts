@@ -1,7 +1,7 @@
 import { AnyJob, Cart, JobType, OutOfServiceJobState, TransferJobState } from '../environement';
+import { LoadTimeEstimator, TransitTimeEstimator, UnloadTimeEstimator } from '../estimators';
 import { Action, ActionType, AnyAction, DropoffAction, PickupAction, Plan, SuspendAction } from '../planner';
 import { LocationId, SimTime } from '../types';
-import { LoadTimeEstimator, TransitTimeEstimator, UnloadTimeEstimator } from '../types';
 
 import { buildTrie, Trie } from './trie';
 
