@@ -1,9 +1,12 @@
 # TODO List
 
+This is a very rough `TODO` list that captures issues encountered
+while coding during the early stages when the codebase is too fluid to benefit from a formal issue tracking system. This list will be cleaned up over time and eventually migrated to GitHub issues.
+
 * Separate core from simulator
 * ~~Rename repo~~
 * NPM package, .npmignore
-* Architectural diagrams - use Illustrator?
+* Architectural diagrams - use Illustrator? Consider some open-source compatible diagram format?
 * x csvTextTrace, structuredTrace, jsonTrace
 * readonly and private keywords
 

@@ -2,4 +2,4 @@
 
 Coming soon.
 
-Please review our [Coding Guidelines](./CODING.md).
+Please review our [Coding Guidelines](./documentation/CODING.md).
