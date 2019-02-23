@@ -1,8 +1,10 @@
-import { buildTrie, Trie } from './trie';
-import { Cart, LocationId, SimTime } from '../types';
+import { Cart } from '../environement';
+import { LocationId, SimTime } from '../types';
 import { AnyJob, JobType, OutOfServiceJobState, TransferJobState } from '../types';
 import { Action, ActionType, AnyAction, DropoffAction, PickupAction, Plan, SuspendAction } from '../types';
 import { LoadTimeEstimator, TransitTimeEstimator, UnloadTimeEstimator } from '../types';
+
+import { buildTrie, Trie } from './trie';
 
 interface PlanState {
     readonly startTime: SimTime;
