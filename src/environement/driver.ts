@@ -6,12 +6,13 @@ import { Dispatcher } from './dispatcher';
 import { Environment } from './environment';
 import { Trace } from './trace';
 
-// The Agent orchestrates the sequences of Actions to complete a set of Jobs.
-export class Agent {
-    private clock: Clock;
-    private dispatcher: Dispatcher;
-    private env: Environment;
-    private trace: Trace | undefined;
+    // The Driver performs the sequence of Actions necessary to complete the
+    // set of assigned Jobs.
+    export class Driver {
+    private readonly clock: Clock;
+    private readonly dispatcher: Dispatcher;
+    private readonly env: Environment;
+    private readonly trace: Trace | undefined;
 
     constructor(clock: Clock, dispatcher: Dispatcher, env: Environment, trace: Trace | undefined) {
         this.clock = clock;

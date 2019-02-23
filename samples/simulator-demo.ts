@@ -1,5 +1,5 @@
 import { AnyJob, LocationId, SimTime } from '../src/types';
-import { Agent, Clock, Dispatcher, Environment, JobFactory, start, TextTrace } from '../src';
+import { Clock, Dispatcher, Driver, Environment, JobFactory, start, TextTrace } from '../src';
 import { CartFactory } from '../src';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -12,8 +12,8 @@ import { CartFactory } from '../src';
 //   Environment
 //     Maintains the state of the world.
 //   Dispatcher
-//     Assigned jobs to workers.
-//   Agent
+//     Assigns jobs to Drivers.
+//   Driver
 //     Issues commands that perform jobs.
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -47,8 +47,9 @@ function go() {
     // The Dispatcher class assigns Jobs to workers.
     const dispatcher = new Dispatcher(clock, environment, trace);
 
-    // The Agent issues the commands that perform jobs that have been assigned.
-    const agent = new Agent(clock, dispatcher, environment, trace);
+    // The Driver performs the sequence of Actions necessary to complete the
+    // set of assigned Jobs.
+    const driver = new Driver(clock, dispatcher, environment, trace);
 
     //
     // Create 3 carts
@@ -59,7 +60,7 @@ function go() {
         // Create a cart, add it to the environment, and start a worker.
         const cart = cartFactory.cart(10, 0);
         environment.addCart(cart);
-        start(agent.drive(cart));
+        start(driver.drive(cart));
     }
 
     //

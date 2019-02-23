@@ -14,9 +14,9 @@ THIS DOCUMENT IS CURRENTLY A WORK IN PROGRESS
 
 # Environment
 
-# Dispatcher
+# Dispatcher (an Agent)
 
-# Agent
+# Driver (an Agent)
 
 # Worker Continuation Model
 
