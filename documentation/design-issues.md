@@ -1,9 +1,10 @@
 # Design Issues
 
 ## Modifying Jobs
-The original design intent was that `Job`s would immutable, with the exception of their `assignedTo` fields. There may be scenarios where it would be desirable to, either change a `Job` or replace it with another `Job`:
-* Suppose a cart is waiting out-of-service until 3pm and then a driver comes along at 2pm.
-* Suppose a pickup is scheduled for location 10 and the the location is changed to 11.
+The original design intent was that `Jobs` would immutable, with the exception of their `assignedTo` fields. There may be scenarios where it would be desirable to either change a `Job` or replace it with another `Job`:
+* a `Cart` is waiting out-of-service until 3pm and then a driver comes along at 2pm.
+* a pickup is scheduled for location 10 and then the location is changed, at the last minute, to location 11.
+* a `Job` is cancelled at the last minute.
 
 ## Sharing Job Sequencing Code
 To determine the best sequence of `Actions` to complete a set of `Jobs` RoutePlanner needs to predict how long `Actions` take and how they impact facets of the state, like `Cart` payloads.

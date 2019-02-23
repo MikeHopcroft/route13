@@ -8,12 +8,6 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Program",
-            "program": "${workspaceFolder}/build/index.js",
-        },
-        {
-            "type": "node",
-            "request": "launch",
             "name": "junk",
             "program": "${workspaceFolder}/build/samples/junk.js",
             "args": [ "--colors" ]
@@ -28,18 +22,6 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Pretty",
-            "program": "${workspaceFolder}/build/samples/pretty.js",
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Planner",
-            "program": "${workspaceFolder}/build/src/planner.js",
-        },
-        {
-            "type": "node",
-            "request": "launch",
             "name": "Graph demo",
             "program": "${workspaceFolder}/build/samples/graph-demo.js",
         },
@@ -49,12 +31,6 @@
             "name": "Simulator demo",
             "program": "${workspaceFolder}/build/samples/simulator-demo.js",
             "args": [ "--colors" ]
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Combinations",
-            "program": "${workspaceFolder}/build/src/planner/combinations.js",
         }
     ]
 }

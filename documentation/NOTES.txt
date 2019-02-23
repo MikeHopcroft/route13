@@ -1,3 +1,6 @@
+Random notes, extracted during code cleanup.
+These should be moved into design documents.
+
 /*
 Job initially enter the system via the event queue, using the introduceJob() method.
 At the specified time, an introduced job becomes visible to the environment and is added to the backlog.
