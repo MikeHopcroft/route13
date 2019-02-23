@@ -23,7 +23,7 @@ export class Agent {
     // Worker/Continuation that operates a single cart.
     // Processes one job at a time. When finished, grabs next unassigned Job
     // from the Dispatcher.
-    *workerLoop(cart: Cart): Continuation {
+    *drive(cart: Cart): Continuation {
         while (true) {
             // Wait for a job to become available.
             yield this.dispatcher.waitForJob();

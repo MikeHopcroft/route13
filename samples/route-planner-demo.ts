@@ -1,6 +1,6 @@
+import { CartFactory, JobFactory } from '../src/environement';
 import { RoutePlanner } from '../src/planner';
-import { Cart, LocationId, SimTime } from '../src/types';
-import { AnyJob, JobType, OutOfServiceJob, OutOfServiceJobState, TransferJob, TransferJobState } from '../src/types';
+import { AnyJob, Cart, LocationId, SimTime } from '../src/types';
 
 
 function transitTimeEstimator(origin: LocationId, destination: LocationId, startTime: SimTime): SimTime {
@@ -15,44 +15,6 @@ function unloadTimeEstimator(location: LocationId, quantity: number, startTime: 
     return 2 * quantity;
 }
 
-const jobs: AnyJob[] = [
-    {
-        id: 1,
-        type: JobType.TRANSFER,
-        assignedTo: null,
-
-        state: TransferJobState.BEFORE_PICKUP,
-        quantity: 5,
-        pickupLocation: 2,
-        pickupAfter: 300,
-        dropoffLocation: 10,
-        dropoffBefore: 3000
-
-    } as TransferJob,
-    {
-        id: 2,
-        type: JobType.TRANSFER,
-        assignedTo: null,
-
-        state: TransferJobState.BEFORE_PICKUP,
-        quantity: 5,
-        pickupLocation: 3,
-        pickupAfter: 300,
-        dropoffLocation: 4,
-        dropoffBefore: 3000
-    } as TransferJob,
-    {
-        id: 3,
-        type: JobType.OUT_OF_SERVICE,
-        assignedTo: null,
-
-        state: OutOfServiceJobState.BEFORE_BREAK,
-        suspendLocation: 7,
-        suspendTime: 3000,
-        resumeTime: 4000
-    } as OutOfServiceJob
-];
-
 
 function go() {
     // Configure the planner to look at permutations of actions associated
@@ -62,22 +24,32 @@ function go() {
     // Log planner output to console.
     const logger = console.log;
 
+    // Planning route for the following jobs:
+    const jobFactory = new JobFactory();
+    const jobs: AnyJob[] = [
+        // Move 5 items from location 2 to 10 between the times 300 and 3000.
+        jobFactory.transfer(5, 2, 300, 10, 3000),
+
+        // Move 5 items from location 3 to 4 between the times 300 and 3000.
+        jobFactory.transfer(5, 3, 300, 4, 3000),
+
+        // Go out of service at location 7 between the times 3000 and 4000.
+        jobFactory.outOfService(7, 3000, 4000),
+    ];
+
+    // Planning route for the following cart:
+    const cartFactory = new CartFactory();
+    const cart = cartFactory.cart(10, 0);
+
     // Construct the planner.
     const planner = new RoutePlanner(maxJobs, loadTimeEstimator, unloadTimeEstimator, transitTimeEstimator, logger);
-
-    // Planning route for this cart.
-    const cart: Cart = {
-        id: 1,
-        capacity: 10,
-        payload: 0,
-        lastKnownLocation: 0
-    };
 
     // Plan starts at this time.
     const time = 0;
     
     // Find the best plan.
-    const plan = planner.getBestRoute(cart, jobs.slice(0,3), time);
+    // TODO: remove the slice.
+    const plan = planner.getBestRoute(cart, jobs, time);
 
     console.log('#########################')
     console.log('Planning Complete');

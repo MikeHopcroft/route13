@@ -59,7 +59,7 @@ function go() {
         // Create a cart, add it to the environment, and start a worker.
         const cart = cartFactory.cart(10, 0);
         environment.addCart(cart);
-        start(agent.workerLoop(cart));
+        start(agent.drive(cart));
     }
 
     //

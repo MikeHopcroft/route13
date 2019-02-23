@@ -128,237 +128,108 @@ plan at the end.
 =================
 Failed:
 
-Plan for cart 1 (working time = 2260):
-PICKUP 5 bags at gate 2 after 300 (job 1)
-    4000: drive for 200s to gate 2
-    4200: load 5 bags in 25s.
-    4225: completed
-DROPOFF 5 bags at gate 10 before 3000 (job 1)
-    4225: drive for 800s to gate 10
-    5025: unload 5 bags in 10s.
-    5035: CONTRAINT VIOLATED - dropoff after deadline 3000
-
-=================
-Failed:
-
-Plan for cart 1 (working time = 1860):
-PICKUP 5 bags at gate 2 after 300 (job 1)
-    4425: drive for 200s to gate 2
-    4625: load 5 bags in 25s.
-    4650: completed
-DROPOFF 5 bags at gate 10 before 3000 (job 1)
-    4650: drive for 800s to gate 10
-    5450: unload 5 bags in 10s.
-    5460: CONTRAINT VIOLATED - dropoff after deadline 3000
-
-=================
-Failed:
-
-Plan for cart 1 (working time = 1460):
-PICKUP 5 bags at gate 2 after 300 (job 1)
-    4000: drive for 200s to gate 2
-    4200: load 5 bags in 25s.
-    4225: completed
-PICKUP 5 bags at gate 3 after 300 (job 2)
-    4225: drive for 100s to gate 3
-    4325: load 5 bags in 25s.
-    4350: completed
-DROPOFF 5 bags at gate 10 before 3000 (job 1)
-    4350: drive for 700s to gate 10
-    5050: unload 5 bags in 10s.
-    5060: CONTRAINT VIOLATED - dropoff after deadline 3000
-
-=================
-Failed:
-
-Plan for cart 1 (working time = 860):
-PICKUP 5 bags at gate 2 after 300 (job 1)
-    4000: drive for 200s to gate 2
-    4200: load 5 bags in 25s.
-    4225: completed
-PICKUP 5 bags at gate 3 after 300 (job 2)
-    4225: drive for 100s to gate 3
-    4325: load 5 bags in 25s.
-    4350: completed
-DROPOFF 5 bags at gate 4 before 3000 (job 2)
-    4350: drive for 100s to gate 4
-    4450: unload 5 bags in 10s.
-    4460: CONTRAINT VIOLATED - dropoff after deadline 3000
-
-=================
-Failed:
-
-Plan for cart 1 (working time = 850):
-PICKUP 5 bags at gate 2 after 300 (job 1)
-    4000: drive for 200s to gate 2
-    4200: load 5 bags in 25s.
-    4225: completed
-PICKUP 5 bags at gate 3 after 300 (job 2)
-    4225: drive for 100s to gate 3
-    4325: load 5 bags in 25s.
-    4350: completed
-SUSPEND at gate 7 before 3000 until 4000 (job 3)
-    4350: drive for 400s to gate 7
-    4750: CONTRAINT VIOLATED - suspends after deadline 3000
-
-=================
-Failed:
-
-Plan for cart 1 (working time = 825):
-PICKUP 5 bags at gate 2 after 300 (job 1)
-    4000: drive for 200s to gate 2
-    4200: load 5 bags in 25s.
-    4225: completed
-SUSPEND at gate 7 before 3000 until 4000 (job 3)
-    4225: drive for 500s to gate 7
-    4725: CONTRAINT VIOLATED - suspends after deadline 3000
-
-=================
-Failed:
-
-Plan for cart 1 (working time = 1560):
-PICKUP 5 bags at gate 3 after 300 (job 2)
-    4000: drive for 300s to gate 3
-    4300: load 5 bags in 25s.
-    4325: completed
-PICKUP 5 bags at gate 2 after 300 (job 1)
-    4325: drive for 100s to gate 2
-    4425: load 5 bags in 25s.
-    4450: completed
-DROPOFF 5 bags at gate 10 before 3000 (job 1)
-    4450: drive for 800s to gate 10
-    5250: unload 5 bags in 10s.
-    5260: CONTRAINT VIOLATED - dropoff after deadline 3000
-
-=================
-Failed:
-
-Plan for cart 1 (working time = 960):
-PICKUP 5 bags at gate 3 after 300 (job 2)
-    4000: drive for 300s to gate 3
-    4300: load 5 bags in 25s.
-    4325: completed
-PICKUP 5 bags at gate 2 after 300 (job 1)
-    4325: drive for 100s to gate 2
-    4425: load 5 bags in 25s.
-    4450: completed
-DROPOFF 5 bags at gate 4 before 3000 (job 2)
-    4450: drive for 200s to gate 4
-    4650: unload 5 bags in 10s.
-    4660: CONTRAINT VIOLATED - dropoff after deadline 3000
-
-=================
-Failed:
-
-Plan for cart 1 (working time = 950):
-PICKUP 5 bags at gate 3 after 300 (job 2)
-    4000: drive for 300s to gate 3
-    4300: load 5 bags in 25s.
-    4325: completed
-PICKUP 5 bags at gate 2 after 300 (job 1)
-    4325: drive for 100s to gate 2
-    4425: load 5 bags in 25s.
-    4450: completed
-SUSPEND at gate 7 before 3000 until 4000 (job 3)
-    4450: drive for 500s to gate 7
-    4950: CONTRAINT VIOLATED - suspends after deadline 3000
-
-=================
-Failed:
-
-Plan for cart 1 (working time = 1160):
-PICKUP 5 bags at gate 3 after 300 (job 2)
-    4000: drive for 300s to gate 3
-    4300: load 5 bags in 25s.
-    4325: completed
-DROPOFF 5 bags at gate 4 before 3000 (job 2)
-    4325: drive for 100s to gate 4
-    4425: unload 5 bags in 10s.
-    4435: CONTRAINT VIOLATED - dropoff after deadline 3000
-
-=================
-Failed:
-
-Plan for cart 1 (working time = 1260):
-PICKUP 5 bags at gate 3 after 300 (job 2)
-    4525: drive for 300s to gate 3
-    4825: load 5 bags in 25s.
-    4850: completed
-DROPOFF 5 bags at gate 4 before 3000 (job 2)
-    4850: drive for 100s to gate 4
-    4950: unload 5 bags in 10s.
-    4960: CONTRAINT VIOLATED - dropoff after deadline 3000
-
-=================
-Failed:
-
-Plan for cart 1 (working time = 1250):
-PICKUP 5 bags at gate 3 after 300 (job 2)
-    4525: drive for 300s to gate 3
-    4825: load 5 bags in 25s.
-    4850: completed
-SUSPEND at gate 7 before 3000 until 4000 (job 3)
-    4850: drive for 400s to gate 7
-    5250: CONTRAINT VIOLATED - suspends after deadline 3000
-
-=================
-Failed:
-
-Plan for cart 1 (working time = 725):
-PICKUP 5 bags at gate 3 after 300 (job 2)
-    4000: drive for 300s to gate 3
-    4300: load 5 bags in 25s.
-    4325: completed
-SUSPEND at gate 7 before 3000 until 4000 (job 3)
-    4325: drive for 400s to gate 7
-    4725: CONTRAINT VIOLATED - suspends after deadline 3000
-
-=================
-Failed:
-
-Plan for cart 1 (working time = 1225):
-SUSPEND at gate 7 before 3000 until 4000 (job 3)
-    4525: drive for 700s to gate 7
-    5225: CONTRAINT VIOLATED - suspends after deadline 3000
-
-=================
-Failed:
-
-Plan for cart 1 (working time = 1250):
-SUSPEND at gate 7 before 3000 until 4000 (job 3)
-    4550: drive for 700s to gate 7
-    5250: CONTRAINT VIOLATED - suspends after deadline 3000
-
-=================
-Failed:
-
-Plan for cart 1 (working time = 1125):
-SUSPEND at gate 7 before 3000 until 4000 (job 3)
-    4425: drive for 700s to gate 7
-    5125: CONTRAINT VIOLATED - suspends after deadline 3000
-
-#########################
-Planning Complete
-
-Plan for cart 1 (working time = 1470):
-PICKUP 5 bags at gate 2 after 300 (job 1)
+Plan for cart 0 (working time = 2260):
+PICKUP 5 bags at gate 2 after 300 (job 0)
     0: drive for 200s to gate 2
     200: wait 100s until 300
     300: load 5 bags in 25s.
     325: completed
-PICKUP 5 bags at gate 3 after 300 (job 2)
+DROPOFF 5 bags at gate 10 before 3000 (job 0)
+    325: drive for 800s to gate 10
+    1125: unload 5 bags in 10s.
+    1135: completed
+PICKUP 5 bags at gate 3 after 300 (job 1)
+    1135: drive for 700s to gate 3
+    1835: load 5 bags in 25s.
+    1860: completed
+SUSPEND at gate 7 before 3000 until 4000 (job 2)
+    1860: drive for 400s to gate 7
+    2260: suspend operations
+    2260: wait 1740s until 4000
+    4000: resume operations
+    4000: completed
+DROPOFF 5 bags at gate 4 before 3000 (job 1)
+    4000: drive for 300s to gate 4
+    4300: unload 5 bags in 10s.
+    4310: CONTRAINT VIOLATED - dropoff after deadline 3000
+
+=================
+Failed:
+
+Plan for cart 0 (working time = 1860):
+PICKUP 5 bags at gate 2 after 300 (job 0)
+    0: drive for 200s to gate 2
+    200: wait 100s until 300
+    300: load 5 bags in 25s.
+    325: completed
+DROPOFF 5 bags at gate 10 before 3000 (job 0)
+    325: drive for 800s to gate 10
+    1125: unload 5 bags in 10s.
+    1135: completed
+SUSPEND at gate 7 before 3000 until 4000 (job 2)
+    1135: drive for 300s to gate 7
+    1435: suspend operations
+    1435: wait 2565s until 4000
+    4000: resume operations
+    4000: completed
+PICKUP 5 bags at gate 3 after 300 (job 1)
+    4000: drive for 400s to gate 3
+    4400: load 5 bags in 25s.
+    4425: completed
+DROPOFF 5 bags at gate 4 before 3000 (job 1)
+    4425: drive for 100s to gate 4
+    4525: unload 5 bags in 10s.
+    4535: CONTRAINT VIOLATED - dropoff after deadline 3000
+
+=================
+Failed:
+
+... 13 more failed plans ...
+
+=================
+Failed:
+
+Plan for cart 0 (working time = 1125):
+SUSPEND at gate 7 before 3000 until 4000 (job 2)
+    0: drive for 700s to gate 7
+    700: suspend operations
+    700: wait 3300s until 4000
+    4000: resume operations
+    4000: completed
+PICKUP 5 bags at gate 3 after 300 (job 1)
+    4000: drive for 400s to gate 3
+    4400: load 5 bags in 25s.
+    4425: completed
+DROPOFF 5 bags at gate 4 before 3000 (job 1)
+    4425: drive for 100s to gate 4
+    4525: unload 5 bags in 10s.
+    4535: CONTRAINT VIOLATED - dropoff after deadline 3000
+
+Considered 16 failed plans.
+Considered 3 successful plans.
+
+#########################
+Planning Complete
+
+Plan for cart 0 (working time = 1470):
+PICKUP 5 bags at gate 2 after 300 (job 0)
+    0: drive for 200s to gate 2
+    200: wait 100s until 300
+    300: load 5 bags in 25s.
+    325: completed
+PICKUP 5 bags at gate 3 after 300 (job 1)
     325: drive for 100s to gate 3
     425: load 5 bags in 25s.
     450: completed
-DROPOFF 5 bags at gate 4 before 3000 (job 2)
+DROPOFF 5 bags at gate 4 before 3000 (job 1)
     450: drive for 100s to gate 4
     550: unload 5 bags in 10s.
     560: completed
-DROPOFF 5 bags at gate 10 before 3000 (job 1)
+DROPOFF 5 bags at gate 10 before 3000 (job 0)
     560: drive for 600s to gate 10
     1160: unload 5 bags in 10s.
     1170: completed
-SUSPEND at gate 7 before 3000 until 4000 (job 3)
+SUSPEND at gate 7 before 3000 until 4000 (job 2)
     1170: drive for 300s to gate 7
     1470: suspend operations
     1470: wait 2530s until 4000
@@ -400,22 +271,22 @@ Next
 2: 3 3 x 3
 3: 1 1 1 x
 
-0 => 0: unrachable
-0 => 1: 2,3,1
-0 => 2: 2
-0 => 3: 2,3
-1 => 0: 0
-1 => 1: unrachable
-1 => 2: 0,2
-1 => 3: 0,2,3
-2 => 0: 3,1,0
-2 => 1: 3,1
-2 => 2: unrachable
-2 => 3: 3
-3 => 0: 1,0
-3 => 1: 1
-3 => 2: 1,0,2
-3 => 3: unrachable
+0 => 0: []
+0 => 1: [2,3,1]
+0 => 2: [2]
+0 => 3: [2,3]
+1 => 0: [0]
+1 => 1: []
+1 => 2: [0,2]
+1 => 3: [0,2,3]
+2 => 0: [3,1,0]
+2 => 1: [3,1]
+2 => 2: []
+2 => 3: [3]
+3 => 0: [1,0]
+3 => 1: [1]
+3 => 2: [1,0,2]
+3 => 3: []
 ~~~
 
 

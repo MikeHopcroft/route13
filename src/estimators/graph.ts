@@ -102,16 +102,18 @@ export class Graph {
     // Returns the least expensive path between two vertices.
     // The path does not contain the starting vertex, but it does include
     // the final vertex. Returns null if no path exists.
-    path(from: Vertex, to: Vertex): Vertex[] {
+    path(from: Vertex, to: Vertex): Vertex[] | null {
         if (this.next[from][to] === null) {
-            return [];
+            return (from === to) ? []: null;
         }
-        // const path = [from];
+
         const path = [];
-        while (from !== to) {
+        do {
             from = this.next[from][to] as Vertex;
             path.push(from);
         }
+        while (from !== to);
+
         return path;
     }
 

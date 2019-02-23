@@ -5,6 +5,7 @@ import { Action, ActionType, AnyAction, DropoffAction, PickupAction, Plan, Suspe
 import { LoadTimeEstimator, TransitTimeEstimator, UnloadTimeEstimator } from '../types';
 
 interface PlanState {
+    readonly startTime: SimTime;
     time: SimTime;
     location: LocationId;
     payload: number;
@@ -13,6 +14,7 @@ interface PlanState {
 
 function stateFromCart(cart: Cart, time: SimTime): PlanState {
     return {
+        startTime: time,
         time,
         location: cart.lastKnownLocation,
         payload: cart.payload,
@@ -37,15 +39,19 @@ export type Logger = (message: string) => void;
 // time.
 export class RoutePlanner {
     // Maximum number of Jobs to plan for. Used to size a trie.
-    maxJobs: number;
+    private readonly maxJobs: number;
 
     // Caller-provided functions that estimates the times to load/unload a
     // certain number of items and travel between two specified locations.
-    loadTimeEstimator: LoadTimeEstimator;
-    unloadTimeEstimator: UnloadTimeEstimator;
-    transitTimeEstimator: TransitTimeEstimator;
+    private readonly loadTimeEstimator: LoadTimeEstimator;
+    private readonly unloadTimeEstimator: UnloadTimeEstimator;
+    private readonly transitTimeEstimator: TransitTimeEstimator;
 
-    logger: Logger | null;
+    private readonly logger: Logger | null;
+
+    // TODO: REVIEW: would rather not have this one piece of mutable state as a
+    // member. This makes the class more of a state machine.
+    private failedPlanCount: number;
 
     // Each job can specify up to two Actions with an ordering constraint.
     // The planner only considers plans where the first Action runs before
@@ -75,7 +81,7 @@ export class RoutePlanner {
     // Note there are only 6 permutations that satisfy the constraint that
     // pickups appear before correspondign dropoffs. This is significantly
     // less than the 24 possible permutations of 4 actions.
-    permutations: Trie;
+    private permutations: Trie;
 
     constructor(
         maxJobs: number,
@@ -89,6 +95,8 @@ export class RoutePlanner {
         this.unloadTimeEstimator = unloadTimeEstimator;
         this.transitTimeEstimator = transitTimeEstimator;
         this.logger= logger;
+
+        this.failedPlanCount = 0;
 
         // Initialize trie of legal action permutations.
         this.permutations = buildTrie([], [...Array(maxJobs * 2).keys()]);
@@ -122,12 +130,20 @@ export class RoutePlanner {
     getBestRoute(cart: Cart, jobs: AnyJob[], time: SimTime): Plan | null {
         let workingTime = Infinity;
         let bestPlan: Plan | null = null;
+        let successfulPlanCount = 0;
+        this.failedPlanCount = 0;
 
         for (const plan of this.validPlansFromJobs(cart, jobs, time)) {
             if (plan.score < workingTime) {
+                ++successfulPlanCount;
                 workingTime = plan.score;
                 bestPlan = plan;
             }
+        }
+        if (this.logger) {
+            this.logger('');
+            this.logger(`Considered ${this.failedPlanCount} failed plans.`)
+            this.logger(`Considered ${successfulPlanCount} successful plans.`)
         }
 
         return bestPlan;
@@ -159,12 +175,13 @@ export class RoutePlanner {
                 const state = { ...previousState };
 
                 if (!this.applyAction(cart.capacity, state, action)) {
+                    ++this.failedPlanCount;
                     if (this.logger) {
                         this.logger('=================');
                         this.logger('Failed:');
                         this.logger('')
                         const plan = { cart, actions: newHead, score: state.workingTime };
-                        this.explainPlan(plan, previousState.time, this.logger);
+                        this.explainPlan(plan, state.startTime, this.logger);
                         this.logger('')
                     }
 
