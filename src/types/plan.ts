@@ -1,5 +1,5 @@
 import { Cart } from '../environement';
-import { AnyJob, OutOfServiceJob, TransferJob } from './job';
+import { AnyJob, OutOfServiceJob, TransferJob } from '../environement/job';
 import { LocationId, SimTime } from './types';
 
 ///////////////////////////////////////////////////////////////////////////////

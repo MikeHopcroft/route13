@@ -1,6 +1,16 @@
-import { AnyJob, LocationId, SimTime } from '../src/types';
-import { Clock, Dispatcher, Driver, Environment, JobFactory, start, TextTrace } from '../src';
-import { CartFactory } from '../src';
+import {
+    AnyJob,
+    CartFactory,
+    Clock,
+    Dispatcher,
+    Driver,
+    Environment,
+    JobFactory,
+    LocationId,
+    SimTime,
+    start,
+    TextTrace
+} from '../src';
 
 ///////////////////////////////////////////////////////////////////////////////
 //

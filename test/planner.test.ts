@@ -4,7 +4,7 @@ import 'mocha';
 import { Cart } from '../src/environement';
 import { RoutePlanner } from '../src/planner';
 import { LocationId, SimTime } from '../src/types';
-import { AnyJob, JobType, OutOfServiceJob, OutOfServiceJobState, TransferJob, TransferJobState } from '../src/types';
+import { AnyJob, JobType, OutOfServiceJob, OutOfServiceJobState, TransferJob, TransferJobState } from '../src/environement';
 
 function transitTimeEstimator(origin: LocationId, destination: LocationId, startTime: SimTime): SimTime {
     return Math.abs(destination - origin) * 100;

@@ -1,13 +1,27 @@
 import { Clock, Continuation } from '../core';
 import { Dispatcher } from './dispatcher';
-import { Cart, Environment, Trace } from '../environement';
-import { ActionType, AnyAction, DropoffAction, PickupAction, SuspendAction } from '../types'
-import { TransferJobState, OutOfServiceJobState } from '../types'
-import { AnyJob, LocationId, SimTime } from '../types';
+import {
+    AnyJob,
+    Cart,
+    Environment,
+    OutOfServiceJobState,
+    Trace,
+    TransferJobState
+} from '../environement';
+import {
+    ActionType,
+    AnyAction,
+    DropoffAction,
+    LocationId,
+    PickupAction,
+    SimTime,
+    SuspendAction
+} from '../types';
 
-    // The Driver performs the sequence of Actions necessary to complete the
-    // set of assigned Jobs.
-    export class Driver {
+
+// The Driver performs the sequence of Actions necessary to complete the
+// set of assigned Jobs.
+export class Driver {
     private readonly clock: Clock;
     private readonly dispatcher: Dispatcher;
     private readonly env: Environment;
