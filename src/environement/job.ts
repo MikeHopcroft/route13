@@ -16,7 +16,7 @@ export enum JobType {
     TRANSFER
 }
 
-export interface Job {
+export interface JobBase {
     id: JobId;
     type: JobType;
 
@@ -38,7 +38,7 @@ export enum OutOfServiceJobState {
     ON_BREAK
 }
 
-export interface OutOfServiceJob extends Job {
+export interface OutOfServiceJob extends JobBase {
     type: JobType.OUT_OF_SERVICE;
 
     state: OutOfServiceJobState;
@@ -58,7 +58,7 @@ export enum TransferJobState {
 //   2. Sufficient time to load, travel to dropoffLocation, and unload before
 //      dropoffBefore time.
 //   3. Cart capacity not exceeded.
-export interface TransferJob extends Job {
+export interface TransferJob extends JobBase {
     type: JobType.TRANSFER;
 
     state: TransferJobState;
@@ -73,5 +73,5 @@ export interface TransferJob extends Job {
     dropoffBefore: SimTime;
 }
 
-export type AnyJob = OutOfServiceJob | TransferJob;
+export type Job = OutOfServiceJob | TransferJob;
 

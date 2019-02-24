@@ -3,9 +3,10 @@
 This is a very rough `TODO` list that captures issues encountered
 while coding during the early stages when the codebase is too fluid to benefit from a formal issue tracking system. This list will be cleaned up over time and eventually migrated to GitHub issues.
 
+* Finish implementing planner.test.ts
 * ~~Consider renaming Action => ActionBase, AnyAction => Action~~
-* Consider renaming Job => JobBase, AnyJob => Job
-* Separate core from simulator
+* ~~Consider renaming Job => JobBase, AnyJob => Job~~
+* ~~Separate core from simulator~~
 * ~~Rename repo~~
 * NPM package, .npmignore
 * Architectural diagrams - use Illustrator? Consider some open-source compatible diagram format?

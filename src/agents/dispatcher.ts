@@ -1,5 +1,5 @@
 import { Clock, Condition, Continuation, NextStep, SimTime } from '../core';
-import { AnyJob, Environment, Trace } from '../environement';
+import { Environment, Job, Trace } from '../environement';
 
 // The Dispatcher class assigns Jobs to Drivers.
 //
@@ -43,7 +43,7 @@ export class Dispatcher {
     // Current implementation just puts the job in a queue. Jobs are assigned
     // from the queue as Carts become available.
     //
-    *introduceJob(job: AnyJob, time: SimTime): Continuation {
+    *introduceJob(job: Job, time: SimTime): Continuation {
         // TODO: it is possible to introduce a job after its start time?
         // Is this ok? Should we log and throw?
 

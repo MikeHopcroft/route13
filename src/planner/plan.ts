@@ -1,5 +1,5 @@
 import { SimTime } from '../core';
-import { AnyJob, Cart, LocationId, OutOfServiceJob, TransferJob } from '../environement';
+import { Cart, Job, LocationId, OutOfServiceJob, TransferJob } from '../environement';
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -21,7 +21,7 @@ export enum ActionType {
 // Using Action, instead of ActionBase, will allow Typescript to restrict the
 // type of an Action when its ActionType is known.
 export interface ActionBase {
-    job: AnyJob;
+    job: Job;
     type: ActionType;
 }
 

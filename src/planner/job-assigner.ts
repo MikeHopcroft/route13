@@ -1,4 +1,7 @@
-import { Job, Cart, CartId } from '../environement';
+import { Cart, CartId, Job } from '../environement';
+
+// WARNING: This is a class skeleton.
+// TODO: Implement this class.
 
 class JobAssigner {
     createAssignment(jobs: IterableIterator<Job>, carts: IterableIterator<Cart>): Map<CartId, Job[]> {

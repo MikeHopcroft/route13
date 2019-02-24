@@ -1,5 +1,5 @@
 import { Clock, Continuation, SimTime } from '../core';
-import { AnyJob, Cart, Environment, LocationId, OutOfServiceJobState, Trace, TransferJobState } from '../environement';
+import { Cart, Environment, Job, LocationId, OutOfServiceJobState, Trace, TransferJobState } from '../environement';
 import { ActionType, Action, DropoffAction, PickupAction, SuspendAction } from '../planner';
 
 import { Dispatcher } from './dispatcher';
@@ -28,7 +28,7 @@ export class Driver {
             yield this.dispatcher.waitForJob();
 
             // Select a job, FIFO order.
-            const job = this.env.unassignedJobs.shift() as AnyJob;
+            const job = this.env.unassignedJobs.shift() as Job;
             this.env.assignJob(job, cart);
 
             // Convert job to a plan.

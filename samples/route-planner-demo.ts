@@ -1,4 +1,4 @@
-import { AnyJob, CartFactory, JobFactory, LocationId, RoutePlanner, SimTime } from '../src';
+import { CartFactory, Job, JobFactory, LocationId, RoutePlanner, SimTime } from '../src';
 
 
 function transitTimeEstimator(origin: LocationId, destination: LocationId, startTime: SimTime): SimTime {
@@ -24,7 +24,7 @@ function go() {
 
     // Planning route for the following jobs:
     const jobFactory = new JobFactory();
-    const jobs: AnyJob[] = [
+    const jobs: Job[] = [
         // Move 5 items from location 2 to 10 between the times 300 and 3000.
         jobFactory.transfer(5, 2, 300, 10, 3000),
 

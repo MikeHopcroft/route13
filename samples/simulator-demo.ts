@@ -1,10 +1,10 @@
 import {
-    AnyJob,
     CartFactory,
     Clock,
     Dispatcher,
     Driver,
     Environment,
+    Job,
     JobFactory,
     LocationId,
     SimTime,
@@ -77,7 +77,7 @@ function go() {
     // Construct a list of jobs.
     //
     const jobFactory = new JobFactory();
-    const jobs: AnyJob[] = [
+    const jobs: Job[] = [
         // Move 5 items from location 2 to 10 between the times 300 and 3000.
         jobFactory.transfer(5, 2, 300, 10, 3000),
 

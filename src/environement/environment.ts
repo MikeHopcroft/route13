@@ -1,4 +1,4 @@
-import { AnyJob, Cart, CartId } from "../environement";
+import { Cart, CartId, Job } from "../environement";
 import { LoadTimeEstimator, RouteNextStep, TransitTimeEstimator, UnloadTimeEstimator } from '../estimators';
 import { RoutePlanner } from '../planner';
 import { Trace } from './trace';
@@ -34,11 +34,11 @@ export class Environment {
     //
     // Job related
     //
-    unassignedJobs: AnyJob[];
+    unassignedJobs: Job[];
 
-    assignedJobs: Set<AnyJob>;
-    successfulJobs: AnyJob[];
-    failedJobs: AnyJob[];
+    assignedJobs: Set<Job>;
+    successfulJobs: Job[];
+    failedJobs: Job[];
 
     // Environment constructor parameters:
     //
@@ -71,7 +71,7 @@ export class Environment {
 
         this.unassignedJobs = [];
 
-        this.assignedJobs = new Set<AnyJob>();
+        this.assignedJobs = new Set<Job>();
         this.successfulJobs = [];
         this.failedJobs = [];
 
@@ -95,7 +95,7 @@ export class Environment {
 
     // Marks a job as being assigned to a Cart and adds the job to the set
     // of assigned jobs.
-    assignJob(job: AnyJob, cart: Cart)
+    assignJob(job: Job, cart: Cart)
     {
         this.assignedJobs.add(job);
         job.assignedTo = cart;
@@ -104,7 +104,7 @@ export class Environment {
         }
     }
 
-    completeJob(job: AnyJob)
+    completeJob(job: Job)
     {
         // Check for job not already assigned.
         this.assignedJobs.delete(job);
@@ -114,7 +114,7 @@ export class Environment {
         }
     }
 
-    failJob(job: AnyJob)
+    failJob(job: Job)
     {
         // Check for job not already assigned.
         this.assignedJobs.delete(job);

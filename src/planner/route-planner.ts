@@ -1,5 +1,5 @@
 import { SimTime } from '../core';
-import { AnyJob, Cart, JobType, LocationId, OutOfServiceJobState, TransferJobState } from '../environement';
+import { Cart, Job, JobType, LocationId, OutOfServiceJobState, TransferJobState } from '../environement';
 import { LoadTimeEstimator, TransitTimeEstimator, UnloadTimeEstimator } from '../estimators';
 import { Action, ActionBase, ActionType, DropoffAction, PickupAction, Plan, SuspendAction } from '../planner';
 
@@ -128,7 +128,7 @@ export class RoutePlanner {
     // not include time when the cart is out of service.
     //
     // Returns null if no Plan satisfies the constraints.
-    getBestRoute(cart: Cart, jobs: AnyJob[], time: SimTime): Plan | null {
+    getBestRoute(cart: Cart, jobs: Job[], time: SimTime): Plan | null {
         let workingTime = Infinity;
         let bestPlan: Plan | null = null;
         let successfulPlanCount = 0;
@@ -151,7 +151,7 @@ export class RoutePlanner {
     }
 
     // Enumerate all valid plans for a set of Jobs.
-    private *validPlansFromJobs(cart: Cart, jobs: AnyJob[], time: SimTime): IterableIterator<Plan> {
+    private *validPlansFromJobs(cart: Cart, jobs: Job[], time: SimTime): IterableIterator<Plan> {
         if (jobs.length > this.maxJobs) {
             const message = `Too many jobs for cart ${cart.id}`;
             throw TypeError(message);
@@ -381,7 +381,7 @@ export class RoutePlanner {
     //   The set of jobs
     //
     // Returns an array of Actions associated with the jobs.
-    private actionsFromJobs(jobs: AnyJob[]): (Action | null)[] {
+    private actionsFromJobs(jobs: Job[]): (Action | null)[] {
         const actions: (Action | null)[] = [];
 
         for (const job of jobs) {
