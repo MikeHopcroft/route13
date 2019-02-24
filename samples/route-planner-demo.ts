@@ -1,6 +1,7 @@
+import { SimTime } from '../src/core';
 import { AnyJob, CartFactory, JobFactory } from '../src/environement';
 import { RoutePlanner } from '../src/planner';
-import { LocationId, SimTime } from '../src/types';
+import { LocationId } from '../src/types';
 
 
 function transitTimeEstimator(origin: LocationId, destination: LocationId, startTime: SimTime): SimTime {

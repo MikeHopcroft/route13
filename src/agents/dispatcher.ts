@@ -1,6 +1,5 @@
-import { Clock, Condition, Continuation, NextStep } from '../core';
+import { Clock, Condition, Continuation, NextStep, SimTime } from '../core';
 import { AnyJob, Environment, Trace } from '../environement';
-import { SimTime } from '../types';
 
 // The Dispatcher class assigns Jobs to Drivers.
 //

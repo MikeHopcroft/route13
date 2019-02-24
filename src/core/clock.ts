@@ -3,7 +3,9 @@
 var FastPriorityQueue = require("fastpriorityqueue");
 
 import { Continuation, NextStep, start } from './continuation';
-import { SimTime } from '../types';
+
+// Current time in the simulation. Units are user-specified.
+export type SimTime = number;
 
 // The main event loop is driven by the Clock.
 // The Clock maintains a priority queue of upcoming events, ordered by
