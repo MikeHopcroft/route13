@@ -5,17 +5,19 @@ while coding during the early stages when the codebase is too fluid to benefit f
 
 * StaffingPlan. Finish implementing. Write unit tests. Add to simulation.
 * TransferGenerator. Implement. Write unit tests. Add to simulation.
+* Finish implementing planner.test.ts
+* Event that gathers stats like job completion counts.
+* JSON tracing
 
 * Friendly name decoder for LocationIds
 * Friendly time formatting
 * Friendly name decoder for arrivals/departures
 * Consider making CartFactory be closure instead of classes. It only has one method, unlike JobFactory.
-* Finish implementing planner.test.ts
 * ~~Consider renaming Action => ActionBase, AnyAction => Action~~
 * ~~Consider renaming Job => JobBase, AnyJob => Job~~
 * ~~Separate core from simulator~~
 * ~~Rename repo~~
-* NPM package, .npmignore
+* ~~NPM package, .npmignore~~
 * Architectural diagrams - use Illustrator? Consider some open-source compatible diagram format?
 * x csvTextTrace, structuredTrace, jsonTrace
 * readonly and private keywords
@@ -60,15 +62,13 @@ while coding during the early stages when the codebase is too fluid to benefit f
     * ~~Documentation~~
     * ~~Move to Estimators directory~~
 * README.md
-    * Project name
-    * Instructions
+    * ~~Project name~~
+    * ~~Instructions~~
     * Explain Flyod-Warshall
     * Overview
     * Architectural document
     * How to use library.
-* Event that gathers stats like job completion counts.
-* JSON tracing
-* Set up travis ci
+* ~~Set up travis ci~~
 * ~~Remove unused packages from packages.json~~
 * Figure out postcompile in packages.json
 
@@ -102,8 +102,8 @@ while coding during the early stages when the codebase is too fluid to benefit f
 * Performance measurements
 * . Coding guidelines
 * Contributing guidelines
-* . License
-* . README.md
+* ~~License~~
+* ~~README.md~~
 * Planning algorithms
     * Assign random
     * Assign closest
@@ -112,9 +112,9 @@ while coding during the early stages when the codebase is too fluid to benefit f
     * Terminology: simulation is dataFeed + environment + planner
     * Terminology: fleet, staff
 * Simulator data feeds
-* .npmignore
-* NPM package publish and version.
-* Project name
+* ~~.npmignore~~
+* ~~NPM package publish and version.~~
+* ~~Project name~~
 
 
 ## Design Issues

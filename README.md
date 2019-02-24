@@ -24,7 +24,7 @@ In order to use `Route13` you must have
 % npm install route13
 ~~~
 
-To run the samples, it is best to build `Route13` from sources. First, clone the [repo](https://github.com/MikeHopcroft/airport) . Then run the following commands:
+To run the samples, it is best to build `Route13` from sources. First, clone the [repo](https://github.com/MikeHopcroft/airport) . Then run the following commands from the root of the repo:
 
 ~~~
 % npm install
@@ -48,54 +48,54 @@ This sample models a simple environment with 11 locations, uniformly spaced alon
 
 This simulator makes use of a `Dispatcher` that is configured to assign jobs randomly to carts as the carts become available.
 
-The simulator is configured with a TextTrace object that logs status to the
-console.
+The simulator is configured with a TextTrace object that logs status to the console. Each status line starts with the simulator time, followed by a brief activity description.
 
 ~~~
 % node build/samples/simulator-demo.js
 
+0: Planning cycle started.
 0: Job 0 assigned to cart 0.
 0: Cart 0 departs location 0 for location 2.
-0: Job 3 assigned to cart 1.
-0: Cart 1 departs location 0 for location 8.
-0: Job 1 assigned to cart 2.
-0: Cart 2 departs location 0 for location 3.
+0: Job 1 assigned to cart 1.
+0: Cart 1 departs location 0 for location 3.
+0: Job 3 assigned to cart 2.
+0: Cart 2 departs location 0 for location 8.
 100: Cart 2 passes location 1.
-100: Cart 1 passes location 1.
 100: Cart 0 passes location 1.
-200: Cart 1 passes location 2.
+100: Cart 1 passes location 1.
 200: Cart 0 arrives at location 2.
 200: Cart 0 waits until 300.
+200: Cart 1 passes location 2.
 200: Cart 2 passes location 2.
+300: Cart 1 arrives at location 3.
+300: Cart 1 begins loading 5 items.
+300: Cart 2 passes location 3.
 300: Cart 0 begins loading 5 items.
-300: Cart 2 arrives at location 3.
-300: Cart 2 begins loading 5 items.
-300: Cart 1 passes location 3.
-325: Cart 2 finishes loading (payload=5).
-325: Cart 2 departs location 3 for location 4.
+325: Cart 1 finishes loading (payload=5).
+325: Cart 1 departs location 3 for location 4.
 325: Cart 0 finishes loading (payload=5).
 325: Cart 0 departs location 2 for location 10.
-400: Cart 1 passes location 4.
+400: Cart 2 passes location 4.
 425: Cart 0 passes location 3.
-425: Cart 2 arrives at location 4.
-425: Cart 2 begins unloading 5 items.
-435: Cart 2 finishes unloading (payload=0).
+425: Cart 1 arrives at location 4.
+425: Cart 1 begins unloading 5 items.
+435: Cart 1 finishes unloading (payload=0).
 435: Job 1 succeeded.
-435: Job 2 assigned to cart 2.
-435: Cart 2 departs location 4 for location 7.
-500: Cart 1 passes location 5.
+435: Job 2 assigned to cart 1.
+435: Cart 1 departs location 4 for location 7.
+500: Cart 2 passes location 5.
 525: Cart 0 passes location 4.
-535: Cart 2 passes location 5.
-600: Cart 1 passes location 6.
+535: Cart 1 passes location 5.
+600: Cart 2 passes location 6.
 625: Cart 0 passes location 5.
-635: Cart 2 passes location 6.
-700: Cart 1 passes location 7.
+635: Cart 1 passes location 6.
+700: Cart 2 passes location 7.
 725: Cart 0 passes location 6.
-735: Cart 2 arrives at location 7.
-735: Cart 2 suspends service at location 7.
-735: Cart 2 waits until 4000.
-800: Cart 1 arrives at location 8.
-800: Cart 1 waits until 1300.
+735: Cart 1 arrives at location 7.
+735: Cart 1 suspends service at location 7.
+735: Cart 1 waits until 4000.
+800: Cart 2 arrives at location 8.
+800: Cart 2 waits until 1300.
 825: Cart 0 passes location 7.
 925: Cart 0 passes location 8.
 1025: Cart 0 passes location 9.
@@ -103,18 +103,25 @@ console.
 1125: Cart 0 begins unloading 5 items.
 1135: Cart 0 finishes unloading (payload=0).
 1135: Job 0 succeeded.
-1300: Cart 1 begins loading 7 items.
-1335: Cart 1 finishes loading (payload=7).
-1335: Cart 1 departs location 8 for location 4.
-1435: Cart 1 passes location 7.
-1535: Cart 1 passes location 6.
-1635: Cart 1 passes location 5.
-1735: Cart 1 arrives at location 4.
-1735: Cart 1 begins unloading 7 items.
-1749: Cart 1 finishes unloading (payload=0).
+1300: Cart 2 begins loading 7 items.
+1335: Cart 2 finishes loading (payload=7).
+1335: Cart 2 departs location 8 for location 4.
+1435: Cart 2 passes location 7.
+1535: Cart 2 passes location 6.
+1635: Cart 2 passes location 5.
+1735: Cart 2 arrives at location 4.
+1735: Cart 2 begins unloading 7 items.
+1749: Cart 2 finishes unloading (payload=0).
 1749: Job 3 succeeded.
+4000: Cart 1 resumes service at location 7.
 4000: Job 2 succeeded.
-4000: Cart 2 resumes service at location 7.
+5000: Planning cycle finished.
+5000: Planning cycle started.
+10000: Planning cycle finished.
+10000: Planning cycle started.
+15000: Planning cycle finished.
+15000: Planning cycle started.
+20000: Planning cycle finished.
 Simulation ended.
 ~~~
 
@@ -128,7 +135,7 @@ This sample demonstrates route planning for a single `Cart`. In this case the
 
 We would like to determine ordering of pickups and dropoffs that minimizes working time.
 
-The `RoutePlanner` has been configured to print out those plans it considered,
+In this sample, the `RoutePlanner` has been configured to print out those plans it considered,
 but rejected because they violated constraints. The sample prints the optimal
 plan at the end.
 
