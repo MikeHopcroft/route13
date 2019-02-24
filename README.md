@@ -5,7 +5,7 @@
 and ML models. `Route13` scenarios include forklifts in warehouses, baggage carts at airports, and trucks on highways. Basically anything that involves workers or equipment moving loads over a network while satisfying constraints around delivery times, equipment capacities, and worker schedules.
 
 For information on how `Route13` works, please see our
-[design documents](https://github.com/MikeHopcroft/route13/tree/master/documentationREADME.md).
+[design documents](https://github.com/MikeHopcroft/route13/blob/master/documentation/README.md).
 
 ## Try Route13
 
@@ -15,7 +15,7 @@ In order to use `Route13` you must have
 [Node installed](https://nodejs.org/en/download/) on your machine.
 `Route13` has been tested with Node version 9.4.0.
 
-`Route13` will be available as an npm package. To install `Route13`,
+`Route13` is be available as an npm package. To install `Route13`,
 
 ~~~
 % npm install route13
