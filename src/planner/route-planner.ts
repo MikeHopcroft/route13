@@ -227,14 +227,14 @@ export class RoutePlanner {
         switch (action.type) {
             case ActionType.DROPOFF: {
                 if (logger) {
-                    logger(`DROPOFF ${action.quantity} bags at gate ${action.location} before ${action.time} (job ${action.job.id})`);
+                    logger(`DROPOFF ${action.quantity} items at location ${action.location} before ${action.time} (job ${action.job.id})`);
                 }
                 const startTime = state.time;
 
                 if (action.location !== state.location) {
                     const transitTime = this.transitTimeEstimator(state.location, action.location, state.time);
                     if (logger) {
-                        logger(`    ${state.time}: drive for ${transitTime}s to gate ${action.location}`);
+                        logger(`    ${state.time}: drive for ${transitTime}s to location ${action.location}`);
                     }
                     state.time += transitTime;
                     state.location = action.location;
@@ -242,7 +242,7 @@ export class RoutePlanner {
 
                 const unloadTime = this.unloadTimeEstimator(action.location, action.quantity, state.time);
                 if (logger) {
-                    logger(`    ${state.time}: unload ${action.quantity} bags in ${unloadTime}s.`);
+                    logger(`    ${state.time}: unload ${action.quantity} items in ${unloadTime}s.`);
                 }
                 state.time += unloadTime;
                 state.payload -= action.quantity;
@@ -270,14 +270,14 @@ export class RoutePlanner {
 
             case ActionType.PICKUP: {
                 if (logger) {
-                    logger(`PICKUP ${action.quantity} bags at gate ${action.location} after ${action.time} (job ${action.job.id})`);
+                    logger(`PICKUP ${action.quantity} items at location ${action.location} after ${action.time} (job ${action.job.id})`);
                 }
                 const startTime = state.time;
 
                 if (action.location !== state.location) {
                     const transitTime = this.transitTimeEstimator(state.location, action.location, state.time);
                     if (logger) {
-                        logger(`    ${state.time}: drive for ${transitTime}s to gate ${action.location}`);
+                        logger(`    ${state.time}: drive for ${transitTime}s to location ${action.location}`);
                     }
                     state.time += transitTime;
                     state.location = action.location;
@@ -294,7 +294,7 @@ export class RoutePlanner {
 
                 const loadTime = this.loadTimeEstimator(action.location, action.quantity, state.time);
                 if (logger) {
-                    logger(`    ${state.time}: load ${action.quantity} bags in ${loadTime}s.`);
+                    logger(`    ${state.time}: load ${action.quantity} items in ${loadTime}s.`);
                 }
                 state.time += loadTime;
                 state.payload += action.quantity;
@@ -314,13 +314,13 @@ export class RoutePlanner {
 
             case ActionType.SUSPEND: {
                 if (logger) {
-                    logger(`SUSPEND at gate ${action.location} before ${action.suspendTime} until ${action.resumeTime} (job ${action.job.id})`);
+                    logger(`SUSPEND at location ${action.location} before ${action.suspendTime} until ${action.resumeTime} (job ${action.job.id})`);
                 }
 
                 if (action.location !== state.location) {
                     const transitTime = this.transitTimeEstimator(state.location, action.location, state.time);;
                     if (logger) {
-                        logger(`    ${state.time}: drive for ${transitTime}s to gate ${action.location}`);
+                        logger(`    ${state.time}: drive for ${transitTime}s to location ${action.location}`);
                     }
                     state.time += transitTime;
                     state.workingTime += transitTime;
@@ -459,10 +459,10 @@ export function formatAction(action: Action): string {
     let s = "Unknown action";
     switch (action.type) {
         case ActionType.DROPOFF:
-            s = `dropoff ${action.quantity} bags at gate ${action.location} before ${action.time}`;
+            s = `dropoff ${action.quantity} items at location ${action.location} before ${action.time}`;
             break;
         case ActionType.PICKUP:
-            s = `pickup ${action.quantity} bags at gate ${action.location} after ${action.time}`;
+            s = `pickup ${action.quantity} items at location ${action.location} after ${action.time}`;
             break;
         case ActionType.SUSPEND:
             s = `suspend at location ${action.location} before ${action.suspendTime} until ${action.resumeTime}`;

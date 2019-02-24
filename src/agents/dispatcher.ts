@@ -11,12 +11,12 @@ import { Environment, Job, Trace } from '../environement';
 // that chooses job assignments from the set of Plans associated with the cross
 // products of Carts and tuples of unassigned Jobs.
 export class Dispatcher {
-    private clock: Clock;
-    private env: Environment;
-    private trace: Trace;
+    private readonly clock: Clock;
+    private readonly env: Environment;
+    private readonly trace: Trace;
 
     private shuttingDown: boolean;
-    private jobAvailableCondition: Condition;
+    private readonly jobAvailableCondition: Condition;
 
     constructor(clock: Clock, env: Environment, trace: Trace) {
         this.clock = clock;
