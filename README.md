@@ -1,4 +1,4 @@
-# Route13 [![Build Status](https://travis-ci.com/MikeHopcroft/TokenFlow.svg?branch=master)](https://travis-ci.com/MikeHopcroft/TokenFlow)
+# Route13 [![Build Status](https://travis-ci.com/MikeHopcroft/route13.svg?branch=master)](https://travis-ci.com/MikeHopcroft/route13)
 
 `Route13` is a framework for building simulators and optimizers for transportation networks. `Route13` includes a number of naive, brute-force and heuristics based optimizers, but its pluggable architecture allows the use of more sophisticated optimizers, such as 
 [linear programming solvers](https://en.wikipedia.org/wiki/Linear_programming)
