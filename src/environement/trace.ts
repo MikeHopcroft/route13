@@ -4,7 +4,7 @@ import { Clock, SimTime } from '../core';
 import { Cart, Job, LocationId } from '../environement';
 
 // The Trace interface provides methods for agents, dispatchers, and the
-// environment to log information about the simultion.
+// environment to log information about the progress of the simultion.
 // DESIGN NOTE: using a structured tracing API (instead of free form text)
 // allows other programs to analyze traces that would be too long for humans
 // to understand.

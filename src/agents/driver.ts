@@ -1,6 +1,6 @@
 import { Clock, Continuation, SimTime } from '../core';
 import { AnyJob, Cart, Environment, LocationId, OutOfServiceJobState, Trace, TransferJobState } from '../environement';
-import { ActionType, AnyAction, DropoffAction, PickupAction, SuspendAction } from '../planner';
+import { ActionType, Action, DropoffAction, PickupAction, SuspendAction } from '../planner';
 
 import { Dispatcher } from './dispatcher';
 
@@ -46,7 +46,7 @@ export class Driver {
     }
 
     // Continuation that performs a sequence of Actions.
-    private *performActionSequence(cart: Cart, actions: AnyAction[]) {
+    private *performActionSequence(cart: Cart, actions: Action[]) {
         for (const action of actions) {
             // TODO: before each action, check to see if there is a new action sequence.
             yield* this.performOneAction(cart, action);
@@ -54,7 +54,7 @@ export class Driver {
     }
 
     // Continuation that performs a single Action.
-    private *performOneAction(cart: Cart, action: AnyAction) {
+    private *performOneAction(cart: Cart, action: Action) {
         // DESIGN NOTE: could eliminate this switch statement if Actions were classes.
         switch (action.type) {
             case ActionType.DROPOFF:
@@ -68,7 +68,7 @@ export class Driver {
                 break;
             default:
                 // Should never get here. Log and throw.
-                const message = `Unknown action type ${(action as AnyAction).type}`;
+                const message = `Unknown action type ${(action as Action).type}`;
                 throw TypeError(message);
         }
     }

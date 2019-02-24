@@ -1,7 +1,7 @@
 import { SimTime } from '../core';
 import { AnyJob, Cart, JobType, LocationId, OutOfServiceJobState, TransferJobState } from '../environement';
 import { LoadTimeEstimator, TransitTimeEstimator, UnloadTimeEstimator } from '../estimators';
-import { Action, ActionType, AnyAction, DropoffAction, PickupAction, Plan, SuspendAction } from '../planner';
+import { Action, ActionBase, ActionType, DropoffAction, PickupAction, Plan, SuspendAction } from '../planner';
 
 import { buildTrie, Trie } from './trie';
 
@@ -165,7 +165,7 @@ export class RoutePlanner {
     }
 
     // Enumerate all value plans from a set of Actions.
-    private *validPlansFromActions(trie: Trie, cart: Cart, previousState: PlanState, actions: (AnyAction | null)[], head: AnyAction[]): IterableIterator<Plan> {
+    private *validPlansFromActions(trie: Trie, cart: Cart, previousState: PlanState, actions: (Action | null)[], head: Action[]): IterableIterator<Plan> {
         let leafNode = true;
 
         for (const branch of trie) {
@@ -223,7 +223,7 @@ export class RoutePlanner {
     // Unfortunately, it may not be feasible to share code because the
     // Environment simulator may use an entirely different approach (e.g. play
     // back a log or fuzz tasks with random errors).
-    private applyAction(capacity: number, state: PlanState, action: AnyAction, logger: Logger | null = null ): boolean {
+    private applyAction(capacity: number, state: PlanState, action: Action, logger: Logger | null = null ): boolean {
         switch (action.type) {
             case ActionType.DROPOFF: {
                 if (logger) {
@@ -359,7 +359,7 @@ export class RoutePlanner {
                 // TODO: for resiliance, perhaps this should log and return
                 // false instead of throwing?
                 // Should never get here. Log and throw.
-                const message = `Unknown action type ${(action as Action).type}`;
+                const message = `Unknown action type ${(action as ActionBase).type}`;
                 throw TypeError(message);
         }
 
@@ -381,8 +381,8 @@ export class RoutePlanner {
     //   The set of jobs
     //
     // Returns an array of Actions associated with the jobs.
-    private actionsFromJobs(jobs: AnyJob[]): (AnyAction | null)[] {
-        const actions: (AnyAction | null)[] = [];
+    private actionsFromJobs(jobs: AnyJob[]): (Action | null)[] {
+        const actions: (Action | null)[] = [];
 
         for (const job of jobs) {
             switch (job.type) {
@@ -455,7 +455,7 @@ export class RoutePlanner {
 }
 
 // Debugging function that converts and Action to a human-readable string.
-export function formatAction(action: AnyAction): string {
+export function formatAction(action: Action): string {
     let s = "Unknown action";
     switch (action.type) {
         case ActionType.DROPOFF:
