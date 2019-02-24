@@ -3,11 +3,16 @@ import chalk, { Chalk, ColorSupport } from 'chalk';
 import { Clock, SimTime } from '../core';
 import { Cart, Job, LocationId } from '../environement';
 
+///////////////////////////////////////////////////////////////////////////////
+//
 // The Trace interface provides methods for agents, dispatchers, and the
 // environment to log information about the progress of the simultion.
 // DESIGN NOTE: using a structured tracing API (instead of free form text)
 // allows other programs to analyze traces that would be too long for humans
 // to understand.
+//
+///////////////////////////////////////////////////////////////////////////////
+
 export interface Trace {
     cartArrives(cart: Cart): void;
     cartPasses(cart: Cart): void;
@@ -33,6 +38,8 @@ export interface Trace {
     plannerFinished(): void;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
 // The TextTrace class logs trace information to the console in human-readable,
 // colorized format. In the output, lines relating to the same Cart will have
 // the same color.
@@ -47,6 +54,7 @@ export interface Trace {
 //     "program": "${workspaceFolder}/build/samples/simulator-demo.js",
 //     "args": [ "--colors" ]
 // }
+///////////////////////////////////////////////////////////////////////////////
 export class TextTrace implements Trace {
     clock: Clock;
     output: (text: string) => void;

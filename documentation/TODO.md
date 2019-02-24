@@ -3,6 +3,13 @@
 This is a very rough `TODO` list that captures issues encountered
 while coding during the early stages when the codebase is too fluid to benefit from a formal issue tracking system. This list will be cleaned up over time and eventually migrated to GitHub issues.
 
+* StaffingPlan. Finish implementing. Write unit tests. Add to simulation.
+* TransferGenerator. Implement. Write unit tests. Add to simulation.
+
+* Friendly name decoder for LocationIds
+* Friendly time formatting
+* Friendly name decoder for arrivals/departures
+* Consider making CartFactory be closure instead of classes. It only has one method, unlike JobFactory.
 * Finish implementing planner.test.ts
 * ~~Consider renaming Action => ActionBase, AnyAction => Action~~
 * ~~Consider renaming Job => JobBase, AnyJob => Job~~
@@ -16,8 +23,8 @@ while coding during the early stages when the codebase is too fluid to benefit f
 * Dispatcher
     * ~~Seems like waitForJob() should be an Environment method.
       Either that or jobAvailableCondition should move to Dispatcher.~~
-    * Distinction between Dispatcher and Environment not clear.
-    * Are Jobs even part of the environment? Why even have an environment?
+    * ~~Distinction between Dispatcher and Environment not clear.~~
+    * ~~Are Jobs even part of the environment? Why even have an environment?~~
     * Consider making a class that combines unassignedJobs with jobAvailableCondition.wakeOne()?
 
 * ~~Right now Dispatcher main loop is not running. Dispatcher needs lots of work.~~

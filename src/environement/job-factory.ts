@@ -3,6 +3,13 @@ import { JobId, JobType, LocationId } from '../environement';
 import { OutOfServiceJob, OutOfServiceJobState } from '../environement';
 import { TransferJob, TransferJobState, } from '../environement';
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// JobFactory
+//
+// Generates OutOfServiceJobs and TransferJobs with unique id values.
+//
+///////////////////////////////////////////////////////////////////////////////
 export class JobFactory {
     nextId: JobId;
 
@@ -10,7 +17,11 @@ export class JobFactory {
         this.nextId = 0;
     }
 
-    outOfService(suspendLocation: LocationId, suspendTime: SimTime, resumeTime: SimTime) {
+    outOfService(
+        suspendLocation: LocationId,
+        suspendTime: SimTime,
+        resumeTime: SimTime
+    ): OutOfServiceJob {
         return  {
             id: this.nextId++,
             type: JobType.OUT_OF_SERVICE,
@@ -29,7 +40,7 @@ export class JobFactory {
         pickupAfter: SimTime,
         dropoffLocation: LocationId,
         dropoffBefore: SimTime
-    ) {
+    ): TransferJob {
         return {
             id: this.nextId++,
             type: JobType.TRANSFER,
