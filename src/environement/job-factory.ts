@@ -1,8 +1,7 @@
 import { SimTime } from '../core';
-import { JobId, JobType } from '../environement';
-import { OutOfServiceJob, OutOfServiceJobState, } from '../environement';
+import { JobId, JobType, LocationId } from '../environement';
+import { OutOfServiceJob, OutOfServiceJobState } from '../environement';
 import { TransferJob, TransferJobState, } from '../environement';
-import { LocationId } from '../types';
 
 export class JobFactory {
     nextId: JobId;

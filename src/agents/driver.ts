@@ -1,7 +1,6 @@
 import { Clock, Continuation, SimTime } from '../core';
-import { AnyJob, Cart, Environment, OutOfServiceJobState, Trace, TransferJobState } from '../environement';
+import { AnyJob, Cart, Environment, LocationId, OutOfServiceJobState, Trace, TransferJobState } from '../environement';
 import { ActionType, AnyAction, DropoffAction, PickupAction, SuspendAction } from '../planner';
-import { LocationId } from '../types';
 
 import { Dispatcher } from './dispatcher';
 

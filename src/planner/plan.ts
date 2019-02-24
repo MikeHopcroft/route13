@@ -1,6 +1,5 @@
 import { SimTime } from '../core';
-import { AnyJob, Cart, OutOfServiceJob, TransferJob } from '../environement';
-import { LocationId } from '../types';
+import { AnyJob, Cart, LocationId, OutOfServiceJob, TransferJob } from '../environement';
 
 ///////////////////////////////////////////////////////////////////////////////
 //

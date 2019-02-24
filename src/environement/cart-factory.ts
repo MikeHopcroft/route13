@@ -1,6 +1,5 @@
 
-import { Cart, CartId } from '../environement';
-import { LocationId } from '../types';
+import { Cart, CartId, LocationId } from '../environement';
 
 export class CartFactory {
     nextId: CartId;
