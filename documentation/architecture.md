@@ -10,6 +10,9 @@ A `Route13` simulation typically consists of a composition of five components:
 * **`Agents`**, which perform actions in the Environment.
 * **`Planner`**, which strives to find an optimal ordering of activies for Agents.
 
+![Route13 Architecture](./images/route13-architecture.png)
+
+
 ## Generators
 `Generators` produce streams of external events that serve as input to the simulation. These events might correspond to work orders, like moving a container from a pier to a railcar; equipment downtime for repairs or refueling; or staffing changes for shifts or breaks.
 
@@ -74,14 +77,31 @@ The `StartPlanning` event could trigger plan generation and then enqueue a `Fini
 Event loops typically consult a system shutdown variable, which allows them to break out of the loop, in the case of a time-bounded simulation.
 
 ## Environment
-The `Environment` maintains the current known state of the world and provides methods for predicting the outcomes of various physical processes.
+The `Environment` maintains the current known state of the world and provides methods, called `estimators`, for predicting the outcomes of various physical processes.
 
-Known state includes physical state, such as the locations of carts, and logical state, such as our best knowledge of upcoming arrivals and shift changes.
+### Physical State
+Known state includes physical state, such as the locations of carts; and logical state, such as our best knowledge of upcoming arrivals and shift changes.
 
-### Locations
-### Carts
-### Jobs
+As `Route13` is concerned with transportation networks, its physical state consists of the locations of a fleet of carts.
+* `Location` - Every location in the environment is associated with a `LocationId`. Locations typically correspond to physical infrastructure like piers, loading docks, and gates. Locations also designate parking lots, fueling stations, and break rooms.
+* `Cart` - Transports items from one location to another. Could be a forklift or a baggage cart or a tractor trailer. Carts have unique `ids`, and fields specifying `capacity`, current `payload`, and last known `LocationId`.
+
+Note that `Route13` does not simulate staffing levels. If staffing simulation is desired, it can be implemented as a separate, upstream `Route13` simulator that acts as a `generator`.
+
+### Logical State
+`Route13` models the assignment of `Jobs` to `Carts`. At any given time, the environment is aware of a set of `Jobs`, some of which will start in the future, and some which are in progress. The `Environment` receives notification of new `Jobs` from a `Generator`.
+
+The `Environment` supports two types of `Jobs`:
+* `TransferJob` - transfers a specified quantity of items from location `A` to location `B`, within a window of time, starting when the items are available at `A` and ending at the delivery deadline.
+* `OutOfServiceJob` - takes a cart out of service at a specified location during a window of time. Used to model crew breaks, refueling, repairs, and breakdowns.
+
 ### Estimators
+The `Environment` is configured with four functions that assist in modelling actions necessary to complete jobs.
+
+* `TransitTimeEstimator` - a function that estimates the time for a cart to move from location `A` to location `B` at a certain time of day. The `Graph` class provides a TransitTimeEstimator` based the [Floyd-Warshall](https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm) shorted path algorithm.
+* `RouteNextStep` - a function that gives the next `LocationId` on the shortest path from location `A` to location `B`. The `Graph` class also provides this function.
+* `LoadTimeEstimator` - a function that estimates the time to load a certain quantity of items at a certain location and time of day.
+* `UnloadTimeEstimator` - a function that estimates the time to unload a certain quantity of items at a certain location and time of day.
 
 ## <a name="agent"></a> Agents
 
@@ -90,22 +110,12 @@ Known state includes physical state, such as the locations of carts, and logical
 ### Dispatcher
 ### The Agent Pattern
 
-# Overview
+## Planner
 
-# Cart
+### Next Available
+### Nearest Available
+### N-move Lookahead
+### Linear Programming
+### ML Model
 
-# Job
-
-# Action
-
-# Clock
-
-# Environment
-
-# Dispatcher (an Agent)
-
-# Driver (an Agent)
-
-# Worker/Agent Continuation Model
-
-# Towers of Hanoi
+### Towers of Hanoi
