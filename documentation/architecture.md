@@ -49,6 +49,10 @@ A `Synthetic Generator` uses probability distributions to create a sequence of w
 
 As with a `Transforming Playback Generator`, a `Synthetic Generator` typically incorporates a small simulator to assign item sources and sinks to the locations of physical infrastructure like piers, loading docks, and gates. The complexity of this simulator depends on the constraints of the physical environment. As an example, a container port might have piers that can accomodate vessels of various sizes. Randomly generated vessels would need to be assigned to unoccupied piers of the appropriate size.
 
+`Route13` provides two synthetic generators.
+* `StaffingPlan` - creates a fleet of `Carts` and corresponding `OutOfServiceJobs` for a set of `Crews` working various `Shifts`.
+* `TransferGenerator` 
+
 ### Implementation of Generators
 `Route13` generators interact with the master simulation via the [Agent Pattern](#agent). Generators that contain an internal simulator can use the same agent-driven architecture as the master simulator.
 
@@ -76,6 +80,30 @@ The `StartPlanning` event could trigger plan generation and then enqueue a `Fini
 
 Event loops typically consult a system shutdown variable, which allows them to break out of the loop, in the case of a time-bounded simulation.
 
+### Eventing Model
+A `Clock` event is a pairing of a time value and a generator of `NextStep` functions, known as a `Continuation`.
+
+The `Clock's` main loop pulls the next event in time from the priority queue, then advances its `Continuation`, which yields a `NextStep`, which is then executed. Typically, the `NextStep` will just requeue the `Continuation` to we awoken at some point in the future.
+
+~~~
+mainloop() {
+    while (true) {
+        const event = this.queue.poll();
+        if (event) {
+            this.time = event.time;
+            start(event.continuation);
+        }
+        else {
+            break;
+        }
+    }
+}
+~~~
+
+You can read more about `Continuations` and `NextStep` functions in the [Agent Pattern](#agent) section.
+
+
+
 ## Environment
 The `Environment` maintains the current known state of the world and provides methods, called `estimators`, for predicting the outcomes of various physical processes.
 
@@ -88,6 +116,8 @@ As `Route13` is concerned with transportation networks, its physical state consi
 
 Note that `Route13` does not simulate staffing levels. If staffing simulation is desired, it can be implemented as a separate, upstream `Route13` simulator that acts as a `generator`.
 
+`Route13` does not simulate congestion due to `Cart` movements. The effects of congestion can be modelled by the `TransitTimeEstimator` function provided to the `Environment` (see the section on [Estimators](#estimators) for more information).
+
 ### Logical State
 `Route13` models the assignment of `Jobs` to `Carts`. At any given time, the environment is aware of a set of `Jobs`, some of which will start in the future, and some which are in progress. The `Environment` receives notification of new `Jobs` from a `Generator`.
 
@@ -95,7 +125,7 @@ The `Environment` supports two types of `Jobs`:
 * `TransferJob` - transfers a specified quantity of items from location `A` to location `B`, within a window of time, starting when the items are available at `A` and ending at the delivery deadline.
 * `OutOfServiceJob` - takes a cart out of service at a specified location during a window of time. Used to model crew breaks, refueling, repairs, and breakdowns.
 
-### Estimators
+### <a name="estimators"></a> Estimators
 The `Environment` is configured with four functions that assist in modelling actions necessary to complete jobs.
 
 * `TransitTimeEstimator` - a function that estimates the time for a cart to move from location `A` to location `B` at a certain time of day. The `Graph` class provides a TransitTimeEstimator` based the [Floyd-Warshall](https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm) shorted path algorithm.
@@ -104,7 +134,7 @@ The `Environment` is configured with four functions that assist in modelling act
 * `UnloadTimeEstimator` - a function that estimates the time to unload a certain quantity of items at a certain location and time of day.
 
 ## Agents
-
+`Agents` are responsible for doing work in the simulation. `Route13` provides a `Driver` agent and a `Dispatcher` agent. 
 
 ### Driver
 ### Dispatcher
