@@ -18,7 +18,7 @@ In order to use `Route13` you must have
 [Node installed](https://nodejs.org/en/download/) on your machine.
 `Route13` has been tested with Node version 9.4.0.
 
-`Route13` is be available as an npm package. To install `Route13`,
+`Route13` is be available as an [npm package](https://www.npmjs.com/package/route13). To install `Route13`,
 
 ~~~
 % npm install route13
@@ -48,7 +48,7 @@ This sample models a simple environment with 11 locations, uniformly spaced alon
 
 This simulator makes use of a `Dispatcher` that is configured to assign jobs randomly to carts as the carts become available.
 
-The simulator is configured with a TextTrace object that logs status to the console. Each status line starts with the simulator time, followed by a brief activity description.
+The simulator is configured with a `TextTrace` object that logs status to the console. Each status line starts with the simulator time, followed by a brief activity description.
 
 ~~~
 % node build/samples/simulator-demo.js
