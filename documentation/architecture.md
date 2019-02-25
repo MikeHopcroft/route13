@@ -7,7 +7,7 @@ A `Route13` simulation typically consists of a composition of five components:
 * **`Generators`**, which produce streams of external events that serve as input to the simulation.
 * The **`Clock`**, which is the event queue that drives the simulation.
 * The **`Environement`**, which maintains the current state of the world.
-* **`Agents`**, which perform actions in the Environment.
+* **`Agents`**, such as the `Driver` and the `Dispatcher`, which perform actions in the Environment.
 * **`Planner`**, which strives to find an optimal ordering of activies for Agents.
 
 ![Route13 Architecture](./images/route13-architecture.png)
@@ -103,12 +103,124 @@ The `Environment` is configured with four functions that assist in modelling act
 * `LoadTimeEstimator` - a function that estimates the time to load a certain quantity of items at a certain location and time of day.
 * `UnloadTimeEstimator` - a function that estimates the time to unload a certain quantity of items at a certain location and time of day.
 
-## <a name="agent"></a> Agents
+## Agents
 
 
 ### Driver
 ### Dispatcher
-### The Agent Pattern
+### <a name="agent"></a> The Agent Pattern
+`Agents` in `Route13` are implemented as generator functions.
+The use of generator functions greatly simplifies `Agent` development and maintenence by allowing one to express an inherently asynchrounous process as if it were synchronous.
+
+#### Motivation
+To motivate the discussion, let's consider a simple `Agent` that moves items from location `A` to location `Z`. This involves the following sequence of operations:
+1. Drive to `A`
+1. Wait until the items are ready for pickup
+1. Load items
+1. Drive to `Z`
+1. Unload items
+
+Since `Route13` is event-driven, each of the steps above will need to be happen as a result of running an event pulled from the `Clock's` priority queue.
+
+One could implement the entire transfer job as a single event object that contains a state machine. The event could keep track of its current step, and use a switch statement to determine what to do on each step. Something like
+
+~~~
+class TransferEvent implements Event {
+    ... constructor, member declarations, etc. ...
+
+    run(): Event {
+        switch (this.state) {
+            case 1:
+                this.driveTo(this.pickupLocation);
+                break;
+            case 2:
+                this.waitUntil(this.itemsReady);
+                break;
+            case 3:
+                this.load(this.quantity);
+                break;
+            case 4:
+                this.driveTo(this.dropoffLocation);
+                break;
+            case 5:
+                this.unload(this.quantity);
+        }
+
+        ++this.state;
+
+        if (this.state < 5) {
+            return this;
+        }
+        else {
+            return null;
+        }
+    }
+}
+~~~
+
+The problem is more complicated than it looks because some of operations, like `this.driveTo(Z)`, have sub-operations:
+
+1. Drive to `B`
+1. Drive to `C`
+1. Drive to `D`
+1. etc...
+
+These can be handled with another state machine inside `this.driveTo()`, but this just introduces more complexity and boilerplate code.
+
+#### Using Generator Expressions
+`Route13` agents are based on the `Continuation` type which is just a generator of `NextSteps`. A `NextStep` is a function that specifies
+the conditions under which the computation should resume.
+
+`Route13` provides two built-in `NextStep` implementations. The first, which is produced with `Clock.until()` suspends computation until a certain time. Here's an example.
+
+~~~
+// This agent waits 100 time units
+function* wait100() {
+    console.log(`${clock.time}: About to wait.`);
+    yield clock.until(clock.time + 100);
+    console.log(`${clock.time}: Finished waiting`);
+}
+~~~
+
+The second `NextStep` suspends until a certain condition is signaled.
+
+~~~
+// This agent waits until a condition is signaled.
+function* waitForCondition(condition: Condition){
+    console.log(`${clock.time}: About to wait for condition.`);
+    yield condition.sleep();
+    console.log(`${clock.time}: Condition signaled.`);
+}
+~~~
+
+
+ what the `Clock's` event loop should do with a
+~~~
+function *transfer() {
+    yield* driveTo(pickupLocation);
+    yield* waitUntil(itemsReady);
+    yield* loadItems();
+    yield* driveTo(dropoffLocation);
+    yield* unloadItems();
+}
+~~~
+
+Suspending the computation until a specified time.
+~~~
+yield clock.until(time);
+~~~
+
+Suspending the computation until a condition is met.
+~~~
+yield condition.sleep();
+~~~
+
+Delegating the computation as a call to another agent:
+~~~
+yield* agent();
+~~~
+
+ that produce iterators of `NextStep` functions.
 
 ## Planner
 
