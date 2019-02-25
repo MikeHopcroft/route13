@@ -11,6 +11,7 @@ interface PlanState {
     location: LocationId;
     payload: number;
     workingTime: SimTime;
+    quantityUnloaded: number;
 }
 
 function stateFromCart(cart: Cart, time: SimTime): PlanState {
@@ -19,7 +20,8 @@ function stateFromCart(cart: Cart, time: SimTime): PlanState {
         time,
         location: cart.lastKnownLocation,
         payload: cart.payload,
-        workingTime: 0
+        workingTime: 0,
+        quantityUnloaded: 0
     }
 }
 
@@ -135,9 +137,17 @@ export class RoutePlanner {
         this.failedPlanCount = 0;
 
         for (const plan of this.validPlansFromJobs(cart, jobs, time)) {
-            if (plan.score < workingTime) {
+            if (this.logger) {
+                this.logger('=================');
+                this.logger('Succeeded:');
+                this.logger('')
+                this.explainPlan(plan, time, this.logger);
+                this.logger('')
+            }
+
+            if (plan.workingTime < workingTime) {
                 ++successfulPlanCount;
-                workingTime = plan.score;
+                workingTime = plan.workingTime;
                 bestPlan = plan;
             }
         }
@@ -181,7 +191,7 @@ export class RoutePlanner {
                         this.logger('=================');
                         this.logger('Failed:');
                         this.logger('')
-                        const plan = { cart, actions: newHead, score: state.workingTime };
+                        const plan = { cart, actions: newHead, workingTime: state.workingTime, score: 0 };
                         this.explainPlan(plan, state.startTime, this.logger);
                         this.logger('')
                     }
@@ -194,8 +204,11 @@ export class RoutePlanner {
         }
     
         if (leafNode) {
-            // TODO: score and working time are different concepts
-            yield { cart, actions: head, score: previousState.workingTime };
+            // For now, score is rate of delivery of items, during working time.
+            const score = (previousState.workingTime !== 0) ?
+                previousState.quantityUnloaded / previousState.workingTime : 0;
+
+            yield { cart, actions: head, workingTime: previousState.workingTime, score };
         }   
     }
 
@@ -246,6 +259,7 @@ export class RoutePlanner {
                 }
                 state.time += unloadTime;
                 state.payload -= action.quantity;
+                state.quantityUnloaded += action.quantity;
 
                 if (state.time > action.time) {
                     // This plan is invalid because it unloads after the deadline.
@@ -323,6 +337,11 @@ export class RoutePlanner {
                         logger(`    ${state.time}: drive for ${transitTime}s to location ${action.location}`);
                     }
                     state.time += transitTime;
+                    // NOTE: we do count transit time to suspend location as
+                    // working time because this time, might have been put to
+                    // better use transporting items. Would not want a plan
+                    // that takes a long time driving to the suspend location
+                    // to score higher than a plan that was delivering items.
                     state.workingTime += transitTime;
                     state.location = action.location;
                 }
@@ -441,7 +460,7 @@ export class RoutePlanner {
     // time
     //   the time to start the Plan.
     explainPlan(plan: Plan, time: SimTime, logger: Logger) {
-        console.log(`Plan for cart ${plan.cart.id} (working time = ${plan.score}):`);
+        console.log(`Plan for cart ${plan.cart.id} (working time = ${plan.workingTime}, score = ${plan.score}):`);
     
         const cart = plan.cart;
         const state = stateFromCart(cart, time);
@@ -475,18 +494,9 @@ export function formatAction(action: Action): string {
 
 // Debuggin function. Prints a description to a Plan to the console.
 export function printPlan(plan: Plan, time: SimTime) {
-    console.log(`Plan for cart ${plan.cart.id} (working time = ${plan.score}):`);
-
-    const cart = plan.cart;
-    const state = {
-        time,
-        location: cart.lastKnownLocation,
-        payload: cart.payload,
-        workingTime: 0
-    }
+    console.log(`Plan for cart ${plan.cart.id} (working time = ${plan.workingTime}):`);
 
     for (const action of plan.actions) {
         console.log(`  ${formatAction(action)}`);
     }
-
 }

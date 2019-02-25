@@ -135,15 +135,44 @@ This sample demonstrates route planning for a single `Cart`. In this case the
 
 We would like to determine ordering of pickups and dropoffs that minimizes working time.
 
-In this sample, the `RoutePlanner` has been configured to print out those plans it considered,
-but rejected because they violated constraints. The sample prints the optimal
-plan at the end.
+In this sample, the `RoutePlanner` has been configured to print out those plans it considered.
+Failed plans are those that were rejected because they violated constraints, such as
+delivery deadlines and cart capacities. Successful plans are given a score that represents
+the rate at which the plan moves items (items unloaded per unit working time).
 
 ~~~
 =================
+Succeeded:
+
+Plan for cart 0 (working time = 2270, score = 0.004405286343612335):
+PICKUP 5 items at location 2 after 300 (job 0)
+    0: drive for 200s to location 2
+    200: wait 100s until 300
+    300: load 5 items in 25s.
+    325: completed
+DROPOFF 5 items at location 10 before 3000 (job 0)
+    325: drive for 800s to location 10
+    1125: unload 5 items in 10s.
+    1135: completed
+PICKUP 5 items at location 3 after 300 (job 1)
+    1135: drive for 700s to location 3
+    1835: load 5 items in 25s.
+    1860: completed
+DROPOFF 5 items at location 4 before 3000 (job 1)
+    1860: drive for 100s to location 4
+    1960: unload 5 items in 10s.
+    1970: completed
+SUSPEND at location 7 before 3000 until 4000 (job 2)
+    1970: drive for 300s to location 7
+    2270: suspend operations
+    2270: wait 1730s until 4000
+    4000: resume operations
+    4000: completed
+
+=================
 Failed:
 
-Plan for cart 0 (working time = 2260):
+Plan for cart 0 (working time = 2260, score = 0):
 PICKUP 5 items at location 2 after 300 (job 0)
     0: drive for 200s to location 2
     200: wait 100s until 300
@@ -169,42 +198,13 @@ DROPOFF 5 items at location 4 before 3000 (job 1)
     4310: CONTRAINT VIOLATED - dropoff after deadline 3000
 
 =================
-Failed:
 
-Plan for cart 0 (working time = 1860):
-PICKUP 5 items at location 2 after 300 (job 0)
-    0: drive for 200s to location 2
-    200: wait 100s until 300
-    300: load 5 items in 25s.
-    325: completed
-DROPOFF 5 items at location 10 before 3000 (job 0)
-    325: drive for 800s to location 10
-    1125: unload 5 items in 10s.
-    1135: completed
-SUSPEND at location 7 before 3000 until 4000 (job 2)
-    1135: drive for 300s to location 7
-    1435: suspend operations
-    1435: wait 2565s until 4000
-    4000: resume operations
-    4000: completed
-PICKUP 5 items at location 3 after 300 (job 1)
-    4000: drive for 400s to location 3
-    4400: load 5 items in 25s.
-    4425: completed
-DROPOFF 5 items at location 4 before 3000 (job 1)
-    4425: drive for 100s to location 4
-    4525: unload 5 items in 10s.
-    4535: CONTRAINT VIOLATED - dropoff after deadline 3000
+... 14 more failed plans and 2 more successful plans ...
 
 =================
 Failed:
 
-... 13 more failed plans ...
-
-=================
-Failed:
-
-Plan for cart 0 (working time = 1125):
+Plan for cart 0 (working time = 1125, score = 0):
 SUSPEND at location 7 before 3000 until 4000 (job 2)
     0: drive for 700s to location 7
     700: suspend operations
@@ -226,7 +226,7 @@ Considered 3 successful plans.
 #########################
 Planning Complete
 
-Plan for cart 0 (working time = 1470):
+Plan for cart 0 (working time = 1470, score = 0.006802721088435374):
 PICKUP 5 items at location 2 after 300 (job 0)
     0: drive for 200s to location 2
     200: wait 100s until 300

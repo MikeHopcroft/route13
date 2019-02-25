@@ -86,7 +86,7 @@ class JobAssigner {
                         alternatives.push({
                             cart,
                             jobs: slate,
-                            score: plan.score
+                            score: plan.workingTime
                         })
                     }
                 }   

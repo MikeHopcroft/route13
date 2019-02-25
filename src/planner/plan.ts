@@ -81,5 +81,6 @@ export type Action = DropoffAction | PickupAction | SuspendAction;
 export interface Plan {
     cart: Cart;
     actions: Action[];
+    workingTime: SimTime;
     score: number;
 }
