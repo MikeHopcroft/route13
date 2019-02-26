@@ -15,7 +15,11 @@ export class CartFactory {
         this.nextId = 0;
     }
 
-    cart(capacity: number, lastKnownLocation: LocationId, payload:number = 0): Cart {
+    cart(
+        capacity: number,
+        lastKnownLocation: LocationId,
+        payload: number = 0
+    ): Cart {
         return {
             id: this.nextId++,
             capacity,

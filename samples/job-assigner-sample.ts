@@ -14,7 +14,6 @@ function go() {
     const slack = 100;    // Was 2
     const maxLookahead = 3;
     const startTime = 0;
-    const startLocation = 0;
 
     // Create some carts.
     console.log(`Creating ${cartCount} carts with capacity = ${cartCapacity}.`)
