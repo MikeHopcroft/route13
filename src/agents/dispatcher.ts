@@ -1,4 +1,4 @@
-import { Clock, Condition, Continuation, NextStep, SimTime } from '../core';
+import { Agent, Clock, Condition, NextStep, SimTime } from '../core';
 import { Environment, Job, Trace } from '../environement';
 
 // The Dispatcher class assigns Jobs to Drivers.
@@ -32,8 +32,8 @@ export class Dispatcher {
     // cancelJob?
 
     waitForJob(): NextStep {
-        return (continuation: Continuation) => {
-            this.jobAvailableCondition.sleep(continuation);
+        return (agent: Agent) => {
+            this.jobAvailableCondition.sleep(agent);
         }
     }
 
@@ -43,7 +43,7 @@ export class Dispatcher {
     // Current implementation just puts the job in a queue. Jobs are assigned
     // from the queue as Carts become available.
     //
-    *introduceJob(job: Job, time: SimTime): Continuation {
+    *introduceJob(job: Job, time: SimTime): Agent {
         // TODO: it is possible to introduce a job after its start time?
         // Is this ok? Should we log and throw?
 
@@ -60,7 +60,7 @@ export class Dispatcher {
         this.jobAvailableCondition.wakeOne();
     }
 
-    // Continuation the runs main planning loop.
+    // Agent the runs main planning loop.
     // NOTE: Currently the planner does nothing, but the loop runs to
     // demonstrate the pattern.
     *planningLoop() {
@@ -69,7 +69,7 @@ export class Dispatcher {
         }
     }
 
-    // Continuation that runs the planner once and updates job assignments.
+    // Agent that runs the planner once and updates job assignments.
     // NOTE: Currently the planner does nothing but log to trace.
     private *updateJobAssignments() {
         if (!this.shuttingDown) {
@@ -95,7 +95,7 @@ export class Dispatcher {
         }
     }
 
-    // Continuation that shuts down the planning loop at a specified time.
+    // Agent that shuts down the planning loop at a specified time.
     *shutdownAt(time: SimTime) {
         yield this.clock.until(time);
         this.shuttingDown = true;

@@ -81,9 +81,9 @@ The `StartPlanning` event could trigger plan generation and then enqueue a `Fini
 Event loops typically consult a system shutdown variable, which allows them to break out of the loop, in the case of a time-bounded simulation.
 
 ### Eventing Model
-A `Clock` event is a pairing of a time value and a generator of `NextStep` functions, known as a `Continuation`.
+A `Clock` event is a pairing of a time value and a generator of `NextStep` functions, known as an `Agent`.
 
-The `Clock's` main loop pulls the next event in time from the priority queue, then advances its `Continuation`, which yields a `NextStep`, which is then executed. Typically, the `NextStep` will just requeue the `Continuation` to we awoken at some point in the future.
+The `Clock's` main loop pulls the next event in time from the priority queue, then advances its `Agent`, which yields a `NextStep` function, which is then executed. Typically, the `NextStep` will just requeue the `Agent` to be awoken at some point in the future.
 
 ~~~
 mainloop() {
@@ -91,7 +91,7 @@ mainloop() {
         const event = this.queue.poll();
         if (event) {
             this.time = event.time;
-            start(event.continuation);
+            start(event.agent);
         }
         else {
             break;
@@ -100,7 +100,7 @@ mainloop() {
 }
 ~~~
 
-You can read more about `Continuations` and `NextStep` functions in the [Agent Pattern](#agent) section.
+You can read more about `Agents` and `NextStep` functions in the [Agent Pattern](#agent) section.
 
 
 
@@ -198,10 +198,11 @@ The problem is more complicated than it looks because some of operations, like `
 These can be handled with another state machine inside `this.driveTo()`, but this just introduces more complexity and boilerplate code.
 
 #### Using Generator Expressions
-`Route13` agents are based on the `Continuation` type which is just a generator of `NextSteps`. A `NextStep` is a function that specifies
+`Route13` agents are implemented as generators of `NextSteps`. A `NextStep` is a function that specifies
 the conditions under which the computation should resume.
 
-`Route13` provides two built-in `NextStep` implementations. The first, which is produced with `Clock.until()` suspends computation until a certain time. Here's an example.
+`Route13` provides two built-in `NextStep` implementations.
+The first, which is produced with `Clock.until()` suspends computation until a certain time. Here's an example.
 
 ~~~
 // This agent waits 100 time units

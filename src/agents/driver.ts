@@ -1,4 +1,4 @@
-import { Clock, Continuation, SimTime } from '../core';
+import { Agent, Clock, SimTime } from '../core';
 import { Cart, Environment, Job, LocationId, OutOfServiceJobState, Trace, TransferJobState } from '../environement';
 import { ActionType, Action, DropoffAction, PickupAction, SuspendAction } from '../planner';
 
@@ -19,10 +19,10 @@ export class Driver {
         this.trace = trace;
     }
 
-    // Continuation that continuosly operates a single cart.
+    // Agent that continuosly operates a single cart.
     // Current implementation processes one job at a time.
     // When finished, grabs next unassigned Job from the Dispatcher.
-    *drive(cart: Cart): Continuation {
+    *drive(cart: Cart): Agent {
         while (true) {
             // Wait for a job to become available.
             yield this.dispatcher.waitForJob();
@@ -45,7 +45,7 @@ export class Driver {
         }
     }
 
-    // Continuation that performs a sequence of Actions.
+    // Agent that performs a sequence of Actions.
     private *performActionSequence(cart: Cart, actions: Action[]) {
         for (const action of actions) {
             // TODO: before each action, check to see if there is a new action sequence.
@@ -53,7 +53,7 @@ export class Driver {
         }
     }
 
-    // Continuation that performs a single Action.
+    // Agent that performs a single Action.
     private *performOneAction(cart: Cart, action: Action) {
         // DESIGN NOTE: could eliminate this switch statement if Actions were classes.
         switch (action.type) {
@@ -73,7 +73,7 @@ export class Driver {
         }
     }
 
-    // Continuation that picks up a load from a location.
+    // Agent that picks up a load from a location.
     private *pickup(cart: Cart, action: PickupAction) {
         yield* this.driveTo(cart, action.location);
         yield* this.waitUntil(cart, action.time);
@@ -81,14 +81,14 @@ export class Driver {
         yield* this.load(cart, action.quantity);
     }
 
-    // Continuation that drops a load off at a location.
+    // Agent that drops a load off at a location.
     private *dropoff(cart: Cart, action: DropoffAction) {
         yield* this.driveTo(cart, action.location);
         yield* this.unload(cart, action.quantity);
         this.env.completeJob(action.job);
     }
 
-    // Continuation that takes a cart out of service for a period of time.
+    // Agent that takes a cart out of service for a period of time.
     private *suspend(cart: Cart, action: SuspendAction) {
         yield* this.driveTo(cart, action.location);
 
@@ -105,7 +105,7 @@ export class Driver {
         this.env.completeJob(action.job);
     }
 
-    // Continuation that drives a cart to a specified destination.
+    // Agent that drives a cart to a specified destination.
     private *driveTo(cart: Cart, destination: LocationId) {
         const start = cart.lastKnownLocation;
         while (cart.lastKnownLocation !== destination) {
@@ -129,7 +129,7 @@ export class Driver {
         }
     }
 
-    // Continuation that loads items onto a cart.
+    // Agent that loads items onto a cart.
     private *load(cart: Cart, quantity: number) {
         if (cart.payload + quantity > cart.capacity) {
             const message = `cart ${cart.id} with ${cart.payload} will exceed capacity loading ${quantity} items.`
@@ -149,7 +149,7 @@ export class Driver {
         }
     }
 
-    // Continuation that unloads items from a cart.
+    // Agent that unloads items from a cart.
     private *unload(cart: Cart, quantity: number) {
         if (cart.payload < quantity) {
             const message = `cart ${cart.id} with ${cart.payload} does not have ${quantity} items to unload.`
@@ -169,7 +169,7 @@ export class Driver {
         }
     }
 
-    // Continuation that waits until a specified time.
+    // Agent that waits until a specified time.
     private *waitUntil(cart: Cart, resumeTime: SimTime) {
         if (this.clock.time < resumeTime) {
             if (this.trace) {

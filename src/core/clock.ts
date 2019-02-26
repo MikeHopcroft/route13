@@ -2,7 +2,7 @@
 //import FastPriorityQueue from 'fastpriorityqueue';
 var FastPriorityQueue = require("fastpriorityqueue");
 
-import { Continuation, NextStep, start } from './continuation';
+import { Agent, NextStep, start } from './continuation';
 
 // Current time in the simulation. Units are user-specified.
 export type SimTime = number;
@@ -28,7 +28,7 @@ export class Clock {
             const event = this.queue.poll();
             if (event) {
                 this.time = event.time;
-                start(event.continuation);
+                start(event.agent);
             }
             else {
                 break;
@@ -36,19 +36,19 @@ export class Clock {
         }
     }
 
-    // Clock.until() is used to suspend a Continuation until a specified time
-    // in the future. It creates a NextStep which, if yielded by a Continuation,
-    // will cause the Continuation to be requeued for the specified time.
+    // Clock.until() is used to suspend an Agent until a specified time
+    // in the future. It creates a NextStep which, if yielded by an Agent,
+    // will cause the Agent to be requeued for the specified time.
     until(time: SimTime): NextStep {
-        return (continuation: Continuation) => {
-            this.queue.add({ time, continuation })
+        return (agent: Agent) => {
+            this.queue.add({ time, agent })
         }
     }
 }
 
-// Events consist of a wakeup time and the Continuation to be woken.
+// Events consist of a wakeup time and the Agent to be woken.
 interface Event {
     time: SimTime;
-    continuation: Continuation;
+    agent: Agent;
 }
 

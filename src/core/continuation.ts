@@ -1,6 +1,6 @@
 // Agents are modelled as generator functions that perform some work and then
-// yield their NextStep. The next step may be scheduled for a particular time
-// in the future, e.g.
+// yield their NextStep. The next step may be scheduled to run at a particular
+// time in the future, e.g.
 //
 //   yield clock.until(200)         // Yield until time 200.
 //
@@ -8,28 +8,28 @@
 //
 //   yield dispatcher.waitForJob()  // Yield until there is a job available.
 //
-// These generator functions, which are called Continuations, return NextSteps
-// which instruct the system when to process the agent's next step.
+// These generator functions, return NextSteps which instruct the system when to
+// process the Agent's next step.
 //
-// In the example, above, clock.until() returns a NextStep function that places
-// the Continuation back on the event queue.
+// In the example, above, clock.until() returns a NextStep() function that
+// places its Agent back on the event queue.
 //
 // dispacher.waitForJob() records the NextStep as waiting on a Condition which
 // is fulfilled when jobs become available.
 
-// A NextStep is a function that does something with a Continuation.
-// The main use case is to schedule a Continuation to resume at some time in
+// A NextStep is a function that does something with an Agent.
+// The main use case is to schedule an Agent to resume at some time in
 // the future or when some condition becomes true.
-export type NextStep = (continuation: IterableIterator<NextStep>) => void;
+export type NextStep = (agent: IterableIterator<NextStep>) => void;
 
-// An agent is modeled as a Continuation, which is a generator of NextSteps.
-export type Continuation = IterableIterator<NextStep>;
+// An Agent is a generator of NextSteps.
+export type Agent = IterableIterator<NextStep>;
 
-// The start function wakes up a Continuation and then schedules its next step.
-export function start(continuation: Continuation) {
-    const { done, value } = continuation.next();
-    const schedule = value;
+// The start function wakes up an Agent and then runs its NextStep.
+export function start(agent: Agent) {
+    const { done, value } = agent.next();
+    const nextStep = value;
     if (!done) {
-        schedule(continuation);
+        nextStep(agent);
     }
 }
