@@ -1,4 +1,4 @@
-import { Agent, start } from './continuation';
+import { Agent, start } from './agent';
 
 // Conditions hold suspended Agents until a certain condition has been
 // met. Conditions are analogous to condition variables used in multi-threaded

@@ -2,7 +2,7 @@
 //import FastPriorityQueue from 'fastpriorityqueue';
 var FastPriorityQueue = require("fastpriorityqueue");
 
-import { Agent, NextStep, start } from './continuation';
+import { Agent, NextStep, start } from './agent';
 
 // Current time in the simulation. Units are user-specified.
 export type SimTime = number;
