@@ -60,6 +60,8 @@ As with a `Transforming Playback Generator`, a `Synthetic Generator` typically i
 TODO: SAMPLE generator code
 ~~~
 
+![Clock](./images/watch-hand-white-clock-time-hour-745292-pxhere.com.jpg)
+
 ## Clock
 `Route13` is an event-driven simulation framework. Unlike a video game that advances its clock at regular intervals to achieve a desired framerate, `Route13` advances its clock to the time of the next scheduled event.
 
@@ -111,7 +113,7 @@ start(agent: Agent) {
 You can read more about `Agents` and `NextStep` functions in the [Agent Pattern](#agent) section.
 
 
-
+![Container Terminal](./images/pexels-photo-1427107.jpeg)
 ## Environment
 The `Environment` maintains the current known state of the world and provides methods, called `estimators`, for predicting the outcomes of various physical processes.
 
