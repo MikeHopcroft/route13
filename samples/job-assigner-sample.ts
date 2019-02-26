@@ -5,10 +5,10 @@ import { Cart, CartFactory, Job, JobAssigner, LocationId, JobFactory, Plan, prin
 const random = seedrandom("seed");
 
 function go() {
-    const cartCount = 5;
+    const cartCount = 10;
     const cartCapacity = 10;
     const meanCartLoadFactor = 0.5;
-    const jobCount = 10;
+    const jobCount = 50;
     const locationCount = 11;
     const meanStartTime = 1000;
     const slack = 100;    // Was 2
@@ -59,7 +59,9 @@ function go() {
     console.log('');
 
     console.log('=== Searching Job Assignments ===');
+    const plannerStartTime = Date.now();
     const assignments = assigner.createAssignment(jobs[Symbol.iterator](), carts[Symbol.iterator](), startTime);
+    const plannerEndTime = Date.now();
 
     console.log('');
     console.log('=== Job Assignment Completed ===');
@@ -71,6 +73,9 @@ function go() {
         // routePlanner.explainPlan(plan, 0, console.log);
         printPlan(plan);
     }
+
+    console.log('');
+    console.log(`Planning took ${(plannerEndTime - plannerStartTime)/1000} seconds.`)
 }
 
 // Creates a randomly positioned Cart.
@@ -169,7 +174,6 @@ function loadTimeEstimator(location: LocationId, quantity: number, startTime: Si
 function unloadTimeEstimator(location: LocationId, quantity: number, startTime: SimTime): SimTime {
     return 2 * quantity;
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 //
