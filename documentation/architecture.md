@@ -144,6 +144,8 @@ The `Environment` is configured with four functions that assist in modelling act
 ## Agents
 `Agents` are responsible for doing work in the simulation. `Route13` provides a `Driver` agent and a `Dispatcher` agent. 
 
+![Forklift](./images/Pallet-Machine-Worker-Warehouse-Forklift-Industry-835340.jpg)
+
 ### Driver
 ### Dispatcher
 ### <a name="agent"></a> The Agent Pattern
