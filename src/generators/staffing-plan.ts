@@ -66,7 +66,9 @@ class StaffingPlan {
         this.pauses = [];
         this.cartsByLocation = new Map<LocationId, Cart[]>();
 
-        start(this.generateJobs(crews));
+        this.generateAllShifts(crews);
+
+        // Allocate and assign carts for each worker on each Shift.
         this.clock.mainloop();
     }
 
@@ -84,25 +86,29 @@ class StaffingPlan {
         return this.pauses[Symbol.iterator]();
     }
 
-    private *generateJobs(crews: Crew[]) {
+    private generateAllShifts(crews: Crew[]) {
         for (const crew of crews) {
             for (let i = 0; i < crew.size; ++i) {
-                yield this.clock.until(crew.shift.working.start);
-                const cart: Cart = this.allocateCart(crew.shift.home);
-
-                for (const b of crew.shift.breaks) {
-                    const job = this.jobFactory.outOfService(
-                        b.location,
-                        b.interval.start,
-                        b.interval.end);
-                    job.assignedTo = cart;
-                    this.pauses.push(job);
-                }
-
-                yield this.clock.until(crew.shift.working.end);
-                this.returnCart(cart);
+                start(this.generateOneShift(crew.shift));
             }
         }
+    }
+
+    private *generateOneShift(shift: Shift) {
+        yield this.clock.until(shift.working.start);
+        const cart: Cart = this.allocateCart(shift.home);
+
+        for (const b of shift.breaks) {
+            const job = this.jobFactory.outOfService(
+                b.location,
+                b.interval.start,
+                b.interval.end);
+            job.assignedTo = cart;
+            this.pauses.push(job);
+        }
+
+        yield this.clock.until(shift.working.end);
+        this.returnCart(cart);
     }
 
     private allocateCart(location: LocationId): Cart {
@@ -153,7 +159,9 @@ function standardShift(start: SimTime, home: LocationId, breakRoom: LocationId):
             { interval: interval(start, 360 * MINUTE, 15 * MINUTE), location: breakRoom },
 
             // End of shift
-            { interval: interval(start, 475 * MINUTE, 5 * MINUTE), location: home }
+            // NOTE: End shift one unit of time early so that cart return will
+            // be processed before next shift allocates a cart.
+            { interval: interval(start, 475 * MINUTE, 5 * MINUTE - 1), location: home }
         ],
         home
     }
