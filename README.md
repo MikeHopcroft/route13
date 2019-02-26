@@ -318,8 +318,9 @@ share `Jobs` or `Carts`.
 The run, below, looks at triples of jobs.
 
 Note that this particular assignment strategy is flawed because
-it didn't assign work to all 5 `Carts`.
-The reason for this is that the algorithm, as implemented, only looks at assigning triples of jobs.
+it doesn't assign work to all 5 `Carts`.
+The reason is that the algorithm, as implemented, only considers assigning triples of jobs.
+The 10 `Jobs` are grouped into three triples, leaving one `Job` unassigned.
 
 ~~~
 % node build/samples/job-assigner-sample.js

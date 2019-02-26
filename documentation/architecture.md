@@ -98,6 +98,14 @@ mainloop() {
         }
     }
 }
+
+start(agent: Agent) {
+    const { done, value } = agent.next();
+    const nextStep = value;
+    if (!done) {
+        nextStep(agent);
+    }
+}
 ~~~
 
 You can read more about `Agents` and `NextStep` functions in the [Agent Pattern](#agent) section.
@@ -142,7 +150,13 @@ The `Environment` is configured with four functions that assist in modelling act
 `Agents` in `Route13` are implemented as generator functions.
 The use of generator functions greatly simplifies `Agent` development and maintenence by allowing one to express an inherently asynchrounous process as if it were synchronous.
 
+NOTE: PLAN TO INTRODUCE THE AGENT PATTERN EXAMPLES HERE BEFORE
+MAKING THE CASE FOR THE PATTERN IN THE MOTIVATION SECTION.
+
 #### Motivation
+
+NOTE: THE MOTIVATION SECTION FIRST DISCUSSES THE APPROACH NOT TAKEN,
+
 To motivate the discussion, let's consider a simple `Agent` that moves items from location `A` to location `Z`. This involves the following sequence of operations:
 1. Drive to `A`
 1. Wait until the items are ready for pickup
