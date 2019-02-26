@@ -304,23 +304,21 @@ Next
 3 => 3: []
 ~~~
 
-### JobAssigner Sample
+### Job Assignment Sample
 
 The `JobAssigner` class performs a brute force search of
 assignments of tuples of `Jobs` to `Carts`. It filters out those
 assignments that fail to satisfy constraints
-(e.g. exceed cart capacities or fail to meet deliver deadlines). Remaining assignments are then scored by the number
+(e.g. those that exceed cart capacities or fail to meet delivery deadlines). Remaining assignments are then scored by the number
 of items delivered per unit of working time. A greedy algorithm 
 is then used to pick a non-conflicting subset of assignments.
 Two assignments are considered to conflict if they
-share `Jobs` or `Carts`.
+share either `Jobs` or `Carts`.
 
-The run, below, looks at triples of jobs.
+The run, below, examines assignments consisting of of one, two, or three jobs. It ends up assigning three jobs to `Carts` 1, 2, and 4, and one job to `Cart 3`.
+There is room for improvement here because `Cart` 5 was left without an assignment. This happened because the cost function maximized item throughput for each `Cart` individually, rather than system-wide.
 
-Note that this particular assignment strategy is flawed because
-it doesn't assign work to all 5 `Carts`.
-The reason is that the algorithm, as implemented, only considers assigning triples of jobs.
-The 10 `Jobs` are grouped into three triples, leaving one `Job` unassigned.
+It is an open question whether to maximize fleet utilization or system throughput. One the one hand, is seems problematic for some `Carts` to be idle, but the plan did manage to complete all of the jobs before their deadlines. On the other hand, an approach that maximizes fleet utilization might complete deliveries earlier, giving greater resilience in the face of delays.
 
 ~~~
 % node build/samples/job-assigner-sample.js
@@ -346,7 +344,7 @@ Creating 10 transfer jobs.
 
 === Searching Job Assignments ===
 
-Searched 600 assignments
+Searched 875 assignments
 
 
 === Job Assignment Completed ===
@@ -377,5 +375,10 @@ Plan for cart 1 (working time = 1191):
   dropoff 4 items at location 4 before 9974 (job 1)
   pickup 2 items at location 4 after 405 (job 2)
   dropoff 2 items at location 6 before 13253 (job 2)
+------------------------------------------------------
+Cart 3: [8]
+Plan for cart 3 (working time = 715):
+  pickup 1 items at location 5 after 508 (job 8)
+  dropoff 1 items at location 3 before 6278 (job 8)
 ~~~
 
