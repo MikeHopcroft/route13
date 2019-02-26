@@ -31,6 +31,13 @@
             "name": "Simulator demo",
             "program": "${workspaceFolder}/build/samples/simulator-demo.js",
             "args": [ "--colors" ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "JobAssigner demo",
+            "program": "${workspaceFolder}/build/samples/job-assigner-sample.js",
+            "args": [ "--colors" ]
         }
     ]
 }

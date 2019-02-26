@@ -460,7 +460,7 @@ export class RoutePlanner {
     // time
     //   the time to start the Plan.
     explainPlan(plan: Plan, time: SimTime, logger: Logger) {
-        console.log(`Plan for cart ${plan.cart.id} (working time = ${plan.workingTime}, score = ${plan.score}):`);
+        logger(`Plan for cart ${plan.cart.id} (working time = ${plan.workingTime}, score = ${plan.score.toPrecision(3)}):`);
     
         const cart = plan.cart;
         const state = stateFromCart(cart, time);
@@ -489,11 +489,11 @@ export function formatAction(action: Action): string {
         default:
             break;
     }
-    return s;
+    return `${s} (job ${action.job.id})`
 }
 
-// Debuggin function. Prints a description to a Plan to the console.
-export function printPlan(plan: Plan, time: SimTime) {
+// Debugging function. Prints a description to a Plan to the console.
+export function printPlan(plan: Plan) {
     console.log(`Plan for cart ${plan.cart.id} (working time = ${plan.workingTime}):`);
 
     for (const action of plan.actions) {

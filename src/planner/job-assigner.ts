@@ -5,7 +5,7 @@ import { LoadTimeEstimator, TransitTimeEstimator, UnloadTimeEstimator } from '..
 import { combinations } from './combinations';
 import { RoutePlanner } from './route-planner';
 
-interface Assignment {
+export interface Assignment {
     cart: Cart,
     jobs: Job[],
     score: number
@@ -19,7 +19,7 @@ interface Assignment {
 // Then greedy selection from enumerated job assignments.
 //
 ///////////////////////////////////////////////////////////////////////////////
-class JobAssigner {
+export class JobAssigner {
     private readonly maxJobCount: number;
     private readonly routePlanner: RoutePlanner;
 
@@ -89,6 +89,9 @@ class JobAssigner {
                             score: plan.workingTime
                         })
                     }
+                    else {
+                        console.log(`REJECTED: [${slate.map((x)=>x.id).join(",")}]`);
+                    }
                 }   
             }
             else {
@@ -104,15 +107,32 @@ class JobAssigner {
 
         // Now we have all of the possible assignments.
         // Sort them by decreasing score.
-        alternatives.sort((a, b) => a.score - b.score);
+        alternatives.sort((a, b) => b.score - a.score);
 
         // Use greedy algorithm to choose assignments, based on score.
         const assignments: Map<Cart, Assignment> = new Map<Cart, Assignment>();
+        const assignedJobs: Set<Job> = new Set<Job>();
         for (const alternative of alternatives) {
-            if (!assignments.has(alternative.cart)) {
+            const text = `[${alternative.jobs.map((x) => x.id).join(',')}]`;
+            let conflicting = false;
+            for (const job of alternative.jobs) {
+                if (assignedJobs.has(job)) {
+                    conflicting = true;
+                    break;
+                }
+            }
+            // console.log(`${conflicting?"CONFLICTING":"OK"}: ${text} (score = ${alternative.score})`);
+            if (!conflicting) {
+                for (const job of alternative.jobs) {
+                    assignedJobs.add(job);
+                }
                 assignments.set(alternative.cart, alternative);
             }
         }
+
+        console.log('');
+        console.log(`Searched ${alternatives.length} assignments`);
+        console.log('');
 
         return assignments;
     }
