@@ -51,3 +51,28 @@ Jobs corresponding to out-of-service periods for specific `Carts` may be known f
 While these `Jobs` are known in advance, they should only be incorporated into the planning process when they would have an impact on the resulting plans.
 
 Suppose, for example, that the planner knew about 10 break periods for a particular `Cart` over the course of a day. If the planner were to consider tuples of `Jobs` that included all of the pre-assigned `Jobs`, it might never consider unassigned `Jobs` that could be completed before the first out-of-service `Job`.
+
+## Ordering of Simultaneous Events
+The `StaffingPlan` class includes a small simulator for allocating carts. When a shift ends, events that return carts and allocate carts are scheduled for the same time. Would like to ensure that all of the events returning carts run before the events allocating carts at the same time. Current fix is a hack - carts are returned one unit of time before they are allocated.
+
+## Planner Cost Functions
+Ideas
+* Maximize cart utilization
+* Maximize item throughput
+* Maximize product of items and time between dropoff and delivery.
+
+## Planner Alternative Selections
+Ideas
+* Greedy by score
+* Random
+* Best of multiple selections
+
+## Planner Unanticipated Behaviors
+
+## C++ Implementation of Planner Core
+Design decisions
+* Host C++ in Node.JS
+* Shell exec per plan - need to consider startup time.
+* Named pipes to local process.
+* Communicate via localhost.
+

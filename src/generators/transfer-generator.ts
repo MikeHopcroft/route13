@@ -21,7 +21,6 @@ interface Departure {
 interface TurnAround {
     arrival: Arrival;
     departure: Departure;
-    // location?: LocationId;
 }
 
 interface Berth {
@@ -91,7 +90,7 @@ export class TransferGenerator {
 
         this.transfers = [];
 
-        // Creat random arrivals.
+        // Create random arrivals.
         for (let i = 0; i < arrivalCount; ++i) {
             this.arrivals.push(this.randomArrival(latestArrivalTime));
         }
@@ -121,29 +120,42 @@ export class TransferGenerator {
         for (const arrival of this.arrivals) {
             const transferCount = this.randomNaturalNumber(maxTransfersPerJourney - 1);
             for (let i = 0; i < transferCount; ++i) {
+                // TODO: do we want to avoid multiple transfers to the same LocationId?
                 const transfer = this.randomTransferJob(arrival);
                 if (transfer) {
                     this.transfers.push();
                 }
                 else {
                     // There is no departure late enough to allow
-                    // time for a transer.
+                    // time for a transfer.
                     break;
                 }
             }
         }
     }
 
-    determineEarliestConnections() {
-        let earliestConnection = 0;
-        for (const arrival of this.arrivals) {
-            while (this.departures[earliestConnection].time - arrival.time < this.minConnectionTime) {
-                ++earliestConnection;
-                if (earliestConnection === this.departures.length) {
-                    return;
+    // Returns the number of berths allocated to handle the set of TurnArounds.
+    berthCount() {
+        return this.berths.length;
+    }
+
+    // Generator of TransferJobs.
+    jobs() {
+        return this.transfers[Symbol.iterator]();
+    }
+
+    private determineEarliestConnections() {
+        if (this.departures.length > 0) {
+            let earliestConnection = 0;
+            for (const arrival of this.arrivals) {
+                while (this.departures[earliestConnection].time - arrival.time < this.minConnectionTime) {
+                    ++earliestConnection;
+                    if (earliestConnection === this.departures.length) {
+                        return;
+                    }
                 }
+                arrival.earliestConnection = earliestConnection;
             }
-            arrival.earliestConnection = earliestConnection;
         }
     }
 
@@ -152,6 +164,8 @@ export class TransferGenerator {
         const berth = this.allocateRandomBerth();
         turnAround.arrival.location = berth;
         turnAround.departure.location = berth;
+        yield this.clock.until(turnAround.departure.time);
+        this.releaseBerth(berth);
     }
 
     private allocateRandomBerth(): LocationId {
@@ -160,7 +174,7 @@ export class TransferGenerator {
             return this.berthFactory.id();
         }
         else {
-            const index = Math.floor(this.random() * this.berths.length);
+            const index = this.randomInRange(0, this.berths.length);
             const temp = this.berths[index];
             this.berths[index] = berth;
             return temp;
@@ -173,13 +187,13 @@ export class TransferGenerator {
 
     private randomArrival(latestArrivalTime: SimTime): Arrival {
         const id = this.journeyFactory.id();
-        const time = Math.floor(this.random() * latestArrivalTime);
+        const time = this.randomInRange(0, latestArrivalTime);
         return { id, time };
     }
 
     private randomTurnAround(arrival: Arrival): TurnAround {
         const id = this.journeyFactory.id();
-        const time = this.turnAroundTime;
+        const time = arrival.time + this.turnAroundTime;
         return {
             arrival,
             departure: { id, time }
@@ -194,13 +208,13 @@ export class TransferGenerator {
             ];
 
             // Pick random quantity of items to transfer.
-            const quantity = Math.floor(this.random() * this.maxItemsPerTransfer);
+            const quantity = this.randomNaturalNumber(this.maxItemsPerTransfer);
 
             return this.jobFactory.transfer(
                 quantity,
-                arrival.location as number,
+                arrival.location as LocationId,
                 arrival.time,
-                departure.location as number,
+                departure.location as LocationId,
                 departure.time);
         }
         return null;
@@ -224,15 +238,3 @@ export class TransferGenerator {
         return 1 + Math.floor(this.random() * max);
     }
 }
-
-// Generate random arrival-departure pair schedule.
-// Walk through arrivals chronologically
-//   Allocate available location or add location
-//   Create random transfer jobs to random future departures allowing minimum transer time
-
-// Controls
-//   Arrival rate
-//   Turnaround time
-//   Item quantity per arrival
-//   Job size distribution
-//   Minimum transfer time

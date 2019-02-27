@@ -159,6 +159,7 @@ function standardShift(start: SimTime, home: LocationId, breakRoom: LocationId):
             { interval: interval(start, 360 * MINUTE, 15 * MINUTE), location: breakRoom },
 
             // End of shift
+            // TODO: consider alternatives to the following hack.
             // NOTE: End shift one unit of time early so that cart return will
             // be processed before next shift allocates a cart.
             { interval: interval(start, 475 * MINUTE, 5 * MINUTE - 1), location: home }
