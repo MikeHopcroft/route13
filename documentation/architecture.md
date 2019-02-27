@@ -60,7 +60,7 @@ As with a `Transforming Playback Generator`, a `Synthetic Generator` typically i
 TODO: SAMPLE generator code
 ~~~
 
-![Clock](./images/watch-hand-white-clock-time-hour-745292-pxhere.com.jpg)
+<img src="./images/clock-147257_1280.png" width="200">
 
 ## Clock
 `Route13` is an event-driven simulation framework. Unlike a video game that advances its clock at regular intervals to achieve a desired framerate, `Route13` advances its clock to the time of the next scheduled event.
