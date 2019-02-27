@@ -38,6 +38,13 @@
             "name": "JobAssigner demo",
             "program": "${workspaceFolder}/build/samples/job-assigner-sample.js",
             "args": [ "--colors" ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Generator demo",
+            "program": "${workspaceFolder}/build/samples/generator-sample.js",
+            "args": [ "--colors" ]
         }
     ]
 }
