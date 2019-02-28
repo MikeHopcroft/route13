@@ -11,7 +11,7 @@ import { TransferJob, TransferJobState, } from '../environement';
 //
 ///////////////////////////////////////////////////////////////////////////////
 export class JobFactory {
-    nextId: JobId;
+    private nextId: JobId;
 
     constructor() {
         this.nextId = 0;

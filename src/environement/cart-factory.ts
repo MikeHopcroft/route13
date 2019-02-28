@@ -9,7 +9,7 @@ import { Cart, CartId, LocationId } from '../environement';
 //
 ///////////////////////////////////////////////////////////////////////////////
 export class CartFactory {
-    nextId: CartId;
+    private nextId: CartId;
 
     constructor() {
         this.nextId = 0;

@@ -18,6 +18,7 @@ A `Route13` simulation typically consists of a composition of five components:
 
 The key characteristic of the Generator event stream is that it is not impacted by actions made by agents in the simulator. A schedule for vessels arriving and departing a container port could be the basis for a Generator, as long as the time required unload and then load each vessel was independent of the routing of the forklifts. If the forklift routing could delay departures, and therefore block new arrivals, it would be necessary to simulate arrival and departure times, instead of playing them back from a schedule.
 
+---
 ![Container Port](./images/pexels-photo-753331.jpeg)
 
 ### Playback Generators
@@ -27,6 +28,7 @@ Such a generator may rely on complex [ETL](https://en.wikipedia.org/wiki/Extract
 
 The playback generator is useful when comparing the performance of optimization algorithms on certain historical days.
 
+---
 ![Weather Delays](./images/pexels-photo-210199.jpeg)
 ### Transforming Playback Generators
 Sometimes it is useful to ask "what if" questions, based on a recorded event stream.
@@ -60,6 +62,7 @@ As with a `Transforming Playback Generator`, a `Synthetic Generator` typically i
 TODO: SAMPLE generator code
 ~~~
 
+---
 <img src="./images/clock-147257_1280.png" width="200">
 
 ## Clock
