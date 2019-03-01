@@ -394,7 +394,7 @@ and two other 15 minute breaks. Both shifts start and end at location 0 and
 their breaks are to be taken at location 7.
 
 ~~~
-% node build/samples/generator-sample.js
+% node build/samples/staffing-plan-sample.js
 
 Day Shift: 08:00-15:59
   break: 10:00-10:15
