@@ -3,12 +3,10 @@ import { Cart, Crew, HOUR, Interval, LocationId, Shift, SimTime, StaffingPlan, s
 function go() {
     const home: LocationId = 0;
     const breakRoom: LocationId = 7;
+
+    // Shifts
     const day: Shift = standardShift(8 * HOUR, home, breakRoom);
     const swing: Shift = adjustShift(day, 8 * HOUR);
-    const inService: Interval = {
-        start: day.working.start - 1,
-        end: swing.working.end + 1
-    };
 
     PrintShift(day);
     PrintShift(swing);
@@ -24,7 +22,7 @@ function go() {
         }
     ];
 
-    const staff = new StaffingPlan(inService, crews);
+    const staff = new StaffingPlan(crews);
 
     console.log('Carts:');
     for (const cart of staff.carts()) {
@@ -55,7 +53,6 @@ function go() {
 
 function formatTime(time: SimTime) {
     const x = new Date(time);
-    // return x.toISOString();
     if (x.valueOf() === MIN_DATE) {
         return "MIN";
     }
