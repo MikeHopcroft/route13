@@ -27,6 +27,7 @@ export interface Break {
 // Shift starts and ends at the home location.
 // Breaks specify their time intervals and locations.
 export interface Shift {
+    name: string,
     working: Interval;
 
     // Breaks must obey the following conventions
@@ -200,8 +201,9 @@ export class StaffingPlan {
 //   30 minute lunch break after 4 hours - in break room
 //   15 minute afternoon break after 6 hours - in break room
 //    5 minute return to base after 7:55 - at home location
-export function standardShift(start: SimTime, home: LocationId, breakRoom: LocationId): Shift {
+export function standardShift(name: string, start: SimTime, home: LocationId, breakRoom: LocationId): Shift {
     return {
+        name: name,
         working: interval(start, 0, 8 * HOUR - 1),
         breaks: [
             // Morning break
@@ -248,8 +250,9 @@ function adjustBreak(b: Break, offset: SimTime): Break {
 }
 
 // Moves a Shift in time.
-export function adjustShift(shift: Shift, offset: number): Shift {
+export function adjustShift(name: string, shift: Shift, offset: number): Shift {
     return {
+        name,
         working: adjustInterval(shift.working, offset),
         breaks: shift.breaks.map((x) => adjustBreak(x, offset)),
         home: shift.home

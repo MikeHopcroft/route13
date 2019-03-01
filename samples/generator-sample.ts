@@ -5,11 +5,13 @@ function go() {
     const breakRoom: LocationId = 7;
 
     // Shifts
-    const day: Shift = standardShift(8 * HOUR, home, breakRoom);
-    const swing: Shift = adjustShift(day, 8 * HOUR);
+    const day: Shift = standardShift('Day Shift', 8 * HOUR, home, breakRoom);
+    const swing: Shift = adjustShift('Swing Shift', day, 8 * HOUR);
 
     PrintShift(day);
+    console.log('');
     PrintShift(swing);
+    console.log('');
 
     const crews: Crew[] = [
         {
@@ -22,12 +24,20 @@ function go() {
         }
     ];
 
+    console.log('Crews');
+    for (const crew of crews) {
+        console.log(`  ${crew.shift.name}: ${crew.size} employees`);
+    }
+    console.log('');
+
     const staff = new StaffingPlan(crews);
 
     console.log('Carts:');
-    for (const cart of staff.carts()) {
-        console.log(`  Cart ${cart.id} starts at ${cart.lastKnownLocation}`);
+    const carts = [...staff.carts()].sort( (a,b) => a.id - b.id );
+    for (const cart of carts) {
+        console.log(`  Cart ${cart.id} - home location is ${cart.lastKnownLocation}`);
     }
+    console.log('');
 
     console.log('Jobs:');
     const jobs = [...staff.jobs()].sort( (a, b) => {
@@ -46,7 +56,14 @@ function go() {
         }
     });
 
+    let previousCart = undefined;
     for (const job of jobs) {
+        const cart = job.assignedTo as Cart;
+        if (cart !== previousCart) {
+            console.log('');
+            console.log(`Cart ${cart.id}`);
+            previousCart = cart;
+        }
         console.log(`  Job ${job.id}: cart ${(job.assignedTo as Cart).id} suspends at ${job.suspendLocation} between ${formatTime(job.suspendTime)} and ${formatTime(job.resumeTime)}.`);
     }
 }
@@ -60,9 +77,13 @@ function formatTime(time: SimTime) {
         return "MAX";
     }
     else {
-        const day = x.toISOString().slice(-16,-14);
+        // const s = x.toISOString().slice(-16,-8);
+        // return s;
+
+        // const day = x.toISOString().slice(-16,-14);
         const time = x.toISOString().slice(-13,-8);
-        return `${day} @ ${time}`;
+        return time;
+        // return `${day} @ ${time}`;
     }
 }
 
@@ -71,7 +92,7 @@ function formatInterval(interval: Interval) {
 }
 
 function PrintShift(shift: Shift) {
-    console.log(`working: ${formatInterval(shift.working)}`);
+    console.log(`${shift.name}: ${formatInterval(shift.working)}`);
     for (const b of shift.breaks) {
         console.log(`  break: ${formatInterval(b.interval)}`);
     }
