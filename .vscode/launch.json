@@ -42,8 +42,15 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Generator demo",
-            "program": "${workspaceFolder}/build/samples/generator-sample.js",
+            "name": "StaffingPlan demo",
+            "program": "${workspaceFolder}/build/samples/staffing-plan-sample.js",
+            "args": [ "--colors" ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "TransferGenerator demo",
+            "program": "${workspaceFolder}/build/samples/transfer-generator-sample.js",
             "args": [ "--colors" ]
         }
     ]

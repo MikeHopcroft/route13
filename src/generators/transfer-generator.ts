@@ -116,6 +116,15 @@ export class TransferGenerator {
         // that can connect with each arrival.
         this.determineEarliestConnections();
 
+        for (const arrival of this.arrivals) {
+            if (arrival.earliestConnection !== undefined) {
+                console.log(`Arrive: ${arrival.time}: CONNECT ${arrival.earliestConnection} at ${this.departures[arrival.earliestConnection].time}`);
+            }
+            else {
+                console.log(`Arrive: ${arrival.time}: NO CONNECTION`);
+            }
+        }
+
         // Generate random transfer jobs for each arrival.
         for (const arrival of this.arrivals) {
             const transferCount = this.randomNaturalNumber(maxTransfersPerJourney - 1);
@@ -123,7 +132,7 @@ export class TransferGenerator {
                 // TODO: do we want to avoid multiple transfers to the same LocationId?
                 const transfer = this.randomTransferJob(arrival);
                 if (transfer) {
-                    this.transfers.push();
+                    this.transfers.push(transfer);
                 }
                 else {
                     // There is no departure late enough to allow
@@ -162,6 +171,7 @@ export class TransferGenerator {
     private *assignBerth(turnAround: TurnAround): IterableIterator<NextStep> {
         yield this.clock.until(turnAround.arrival.time);
         const berth = this.allocateRandomBerth();
+        console.log(`assignBerth: ${turnAround.arrival.id}, ${turnAround.departure.id}, ${berth}`);
         turnAround.arrival.location = berth;
         turnAround.departure.location = berth;
         yield this.clock.until(turnAround.departure.time);
@@ -172,6 +182,9 @@ export class TransferGenerator {
         let berth = this.berths.pop();
         if (berth === undefined) {
             return this.berthFactory.id();
+        }
+        else if (this,this.berths.length === 0) {
+            return berth;
         }
         else {
             const index = this.randomInRange(0, this.berths.length);
