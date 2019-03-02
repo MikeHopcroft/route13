@@ -1,26 +1,28 @@
 import * as seedrandom from 'seedrandom';
+import { Gaussian } from 'ts-gaussian';
 
 import { Clock, NextStep, SimTime, start } from '../core';
 import { JobFactory, LocationId, TransferJob } from '../environement';
 
-type JourneyId = number;
+export type JourneyId = number;
 
-interface Arrival {
+export interface Arrival {
     id: JourneyId;
     time: SimTime;
     location?: LocationId
     earliestConnection?: number;
 }
 
-interface Departure {
+export interface Departure {
     id: JourneyId;
     time: SimTime;
     location?: LocationId
 }
 
-interface TurnAround {
+export interface TurnAround {
     arrival: Arrival;
     departure: Departure;
+    jobs: TransferJob[];
 }
 
 interface Berth {
@@ -51,6 +53,7 @@ export class TransferGenerator {
     private readonly minConnectionTime: SimTime;
     private readonly maxItemsPerTransfer: number;
 
+    private readonly distribution: Gaussian;
     private readonly random: seedrandom.prng;
     private readonly berthFactory: IdFactory;
     private readonly jobFactory: JobFactory;
@@ -76,7 +79,8 @@ export class TransferGenerator {
         this.maxItemsPerTransfer = maxItemsPerTransfer;
         this.turnAroundTime = turnAroundTime;
 
-        this.random = seedrandom('seed');
+        this.distribution = new Gaussian(minConnectionTime * 1.5, minConnectionTime * minConnectionTime);
+        this.random = seedrandom('seed1');
         this.berthFactory = new IdFactory();
         this.journeyFactory = new IdFactory();
         this.jobFactory = new JobFactory();
@@ -126,21 +130,35 @@ export class TransferGenerator {
         }
 
         // Generate random transfer jobs for each arrival.
-        for (const arrival of this.arrivals) {
-            const transferCount = this.randomNaturalNumber(maxTransfersPerJourney - 1);
-            for (let i = 0; i < transferCount; ++i) {
-                // TODO: do we want to avoid multiple transfers to the same LocationId?
-                const transfer = this.randomTransferJob(arrival);
-                if (transfer) {
-                    this.transfers.push(transfer);
+        for (const turnAround of this.turnArounds) {
+            const arrival = turnAround.arrival;
+            for (const transfer of this.randomTransferJobs(arrival)) {
+                if (transfer.id == 8 || transfer.id == 3) {
+                    console.log(`job ${transfer.id} arrival ${arrival.id} to departure ${turnAround.departure.id}`);
                 }
-                else {
-                    // There is no departure late enough to allow
-                    // time for a transfer.
-                    break;
-                }
+                this.transfers.push(transfer);
+                turnAround.jobs.push(transfer);
             }
         }
+        // for (const arrival of this.arrivals) {
+        //     for (const transfer of this.randomTransferJobs(arrival)) {
+        //         this.transfers.push(transfer);
+        //     }
+        // }
+            // const transferCount = this.randomNaturalNumber(maxTransfersPerJourney - 1);
+            // for (let i = 0; i < transferCount; ++i) {
+            //     // TODO: do we want to avoid multiple transfers to the same LocationId?
+            //     // yes();
+            //     const transfer = this.randomTransferJob(arrival);
+            //     if (transfer) {
+            //         this.transfers.push(transfer);
+            //     }
+            //     else {
+            //         // There is no departure late enough to allow
+            //         // time for a transfer.
+            //         break;
+            //     }
+            // }
     }
 
     // Returns the number of berths allocated to handle the set of TurnArounds.
@@ -151,6 +169,10 @@ export class TransferGenerator {
     // Generator of TransferJobs.
     jobs() {
         return this.transfers[Symbol.iterator]();
+    }
+
+    getTurnArounds() {
+        return this.turnArounds[Symbol.iterator]();
     }
 
     private determineEarliestConnections() {
@@ -171,7 +193,7 @@ export class TransferGenerator {
     private *assignBerth(turnAround: TurnAround): IterableIterator<NextStep> {
         yield this.clock.until(turnAround.arrival.time);
         const berth = this.allocateRandomBerth();
-        console.log(`assignBerth: ${turnAround.arrival.id}, ${turnAround.departure.id}, ${berth}`);
+        console.log(`Inbound #${turnAround.arrival.id} becomes outbound #${turnAround.departure.id} at location ${berth}`);
         turnAround.arrival.location = berth;
         turnAround.departure.location = berth;
         yield this.clock.until(turnAround.departure.time);
@@ -209,29 +231,62 @@ export class TransferGenerator {
         const time = arrival.time + this.turnAroundTime;
         return {
             arrival,
-            departure: { id, time }
+            departure: { id, time },
+            jobs: []
         }
     }
 
-    private randomTransferJob(arrival: Arrival): TransferJob | null {
+
+    private *randomTransferJobs(arrival: Arrival): IterableIterator<TransferJob> {
         if (arrival.earliestConnection !== undefined) {
-            // Pick departure late enough in future to allow a transfer.
-            const departure = this.departures[
-                this.randomInRange(arrival.earliestConnection, this.departures.length)
-            ];
+            for (let i = arrival.earliestConnection; i < this.departures.length; ++i) {
+                const departure = this.departures[i];
+                if (arrival.location !== departure.location) {
+                    const connectionTime = departure.time - arrival.time;
+                    const p = this.distribution.pdf(connectionTime) / this.distribution.pdf(this.distribution.mean);
+                    if (this.random() < p) {
+                        // Pick random quantity of items to transfer.
+                        const quantity = this.randomNaturalNumber(this.maxItemsPerTransfer);
 
-            // Pick random quantity of items to transfer.
-            const quantity = this.randomNaturalNumber(this.maxItemsPerTransfer);
+                        const job = this.jobFactory.transfer(
+                            quantity,
+                            arrival.location as LocationId,
+                            arrival.time,
+                            departure.location as LocationId,
+                            departure.time);
 
-            return this.jobFactory.transfer(
-                quantity,
-                arrival.location as LocationId,
-                arrival.time,
-                departure.location as LocationId,
-                departure.time);
+                        if (job.id === 3 || job.id === 8) {
+                            console.log(`job ${job.id}: inbound #${arrival.id} at ${arrival.time} ==? ${job.pickupAfter} ${formatTime(job.pickupAfter)}`);
+                            console.log(`    Job ${job.id}: move ${job.quantity} items from ${job.pickupLocation} to ${job.dropoffLocation} between ${formatTime(job.pickupAfter)} and ${formatTime(job.dropoffBefore)}`);
+                            console.log('here');
+                        }
+                        yield job;
+                    }
+                }
+            }
         }
         return null;
     }
+
+    // private randomTransferJob(arrival: Arrival): TransferJob | null {
+    //     if (arrival.earliestConnection !== undefined) {
+    //         // Pick departure late enough in future to allow a transfer.
+    //         const departure = this.departures[
+    //             this.randomInRange(arrival.earliestConnection, this.departures.length)
+    //         ];
+
+    //         // Pick random quantity of items to transfer.
+    //         const quantity = this.randomNaturalNumber(this.maxItemsPerTransfer);
+
+    //         return this.jobFactory.transfer(
+    //             quantity,
+    //             arrival.location as LocationId,
+    //             arrival.time,
+    //             departure.location as LocationId,
+    //             departure.time);
+    //     }
+    //     return null;
+    // }
 
     // Returns random integer in range [start, end).
     private randomInRange(start:number, end:number) {
@@ -250,4 +305,31 @@ export class TransferGenerator {
         }
         return 1 + Math.floor(this.random() * max);
     }
+}
+
+
+// export class Gaussian {
+//     private readonly mean: number;
+//     private readonly dev: number;
+//     private readonly a: number;
+//     private readonly b: number;
+
+//     constructor(mean: number, dev: number) {
+//         this.mean = mean;
+//         this.dev = dev;
+
+//         this.a = 1/Math.sqrt(2 * Math.PI * dev * dev);
+//         this.b = -1 / 2 / dev / dev;
+//     }
+
+//     p(x: number): number {
+//         const c = x - this.mean;
+//         return this.a * Math.exp(c * c * this.b);
+//     }
+// }
+
+// TODO: delete this debugging function.
+function formatTime(time: SimTime) {
+    const x = new Date(time);
+    return x.toISOString().slice(-13,-8);
 }

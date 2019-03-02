@@ -39,6 +39,7 @@
     "chalk": "^2.4.2",
     "debug": "^4.1.0",
     "fastpriorityqueue": "^0.6.1",
-    "seedrandom": "^2.4.4"
+    "seedrandom": "^2.4.4",
+    "ts-gaussian": "^1.2.0"
   }
 }
