@@ -144,7 +144,7 @@ the rate at which the plan moves items (items unloaded per unit working time).
 =================
 Succeeded:
 
-Plan for cart 0 (working time = 2270, score = 0.004405286343612335):
+Route for cart 0 (working time = 2270, score = 0.004405286343612335):
 PICKUP 5 items at location 2 after 300 (job 0)
     0: drive for 200s to location 2
     200: wait 100s until 300
@@ -172,7 +172,7 @@ SUSPEND at location 7 before 3000 until 4000 (job 2)
 =================
 Failed:
 
-Plan for cart 0 (working time = 2260, score = 0):
+Route for cart 0 (working time = 2260, score = 0):
 PICKUP 5 items at location 2 after 300 (job 0)
     0: drive for 200s to location 2
     200: wait 100s until 300
@@ -199,12 +199,12 @@ DROPOFF 5 items at location 4 before 3000 (job 1)
 
 =================
 
-... 14 more failed plans and 2 more successful plans ...
+... 14 more failed routes and 2 more successful routes ...
 
 =================
 Failed:
 
-Plan for cart 0 (working time = 1125, score = 0):
+Route for cart 0 (working time = 1125, score = 0):
 SUSPEND at location 7 before 3000 until 4000 (job 2)
     0: drive for 700s to location 7
     700: suspend operations
@@ -221,12 +221,12 @@ DROPOFF 5 items at location 4 before 3000 (job 1)
     4535: CONTRAINT VIOLATED - dropoff after deadline 3000
 
 
-Considered 16 failed plans.
-Considered 3 successful plans.
+Considered 16 failed routes.
+Considered 3 successful route.
 #########################
-Planning Complete
+Routing Complete
 
-Plan for cart 0 (working time = 1470, score = 0.006802721088435374):
+Route for cart 0 (working time = 1470, score = 0.006802721088435374):
 PICKUP 5 items at location 2 after 300 (job 0)
     0: drive for 200s to location 2
     200: wait 100s until 300

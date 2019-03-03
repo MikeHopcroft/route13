@@ -1,11 +1,11 @@
 import { SimTime } from '../core';
 import { Cart, Job, JobType, LocationId, OutOfServiceJobState, TransferJobState } from '../environement';
 import { LoadTimeEstimator, TransitTimeEstimator, UnloadTimeEstimator } from '../estimators';
-import { Action, ActionBase, ActionType, DropoffAction, PickupAction, Plan, SuspendAction } from '../planner';
+import { Action, ActionBase, ActionType, DropoffAction, PickupAction, Route, SuspendAction } from '../planner';
 
 import { buildTrie, Trie } from './trie';
 
-interface PlanState {
+interface RouteState {
     readonly startTime: SimTime;
     time: SimTime;
     location: LocationId;
@@ -14,7 +14,7 @@ interface PlanState {
     quantityUnloaded: number;
 }
 
-function stateFromCart(cart: Cart, time: SimTime): PlanState {
+function stateFromCart(cart: Cart, time: SimTime): RouteState {
     return {
         startTime: time,
         time,
@@ -54,20 +54,20 @@ export class RoutePlanner {
 
     // TODO: REVIEW: would rather not have this one piece of mutable state as a
     // member. This makes the class more of a state machine.
-    private failedPlanCount: number;
+    private failedRouteCount: number;
 
     // Each job can specify up to two Actions with an ordering constraint.
-    // The planner only considers plans where the first Action runs before
+    // The planner only considers routes where the first Action runs before
     // the second Action. As an example, a TransferJob consists of a
     // PickupAction and a DropoffAction. The PickupAction must be run before
     // the DropOffAction, but Actions from other jobs can run between.
     //
-    // A plan is a sequence of Actions. The paths through `permutations` trie
+    // A Route is a sequence of Actions. The paths through `permutations` trie
     // represent the permutations of Actions that maintain the ordering
     // constraints. The permutations are represented as sequences of positions
-    // in the plan's Action array.
+    // in the Route's Action array.
     //
-    // For example, consider a plan with two transfer jobs, one from A to B
+    // For example, consider a Route with two transfer jobs, one from A to B
     // and the other from C to D. The Action array might consist of
     //    pickup from A
     //    dropoff at B
@@ -99,13 +99,13 @@ export class RoutePlanner {
         this.transitTimeEstimator = transitTimeEstimator;
         this.logger= logger;
 
-        this.failedPlanCount = 0;
+        this.failedRouteCount = 0;
 
         // Initialize trie of legal action permutations.
         this.permutations = buildTrie([], [...Array(maxJobs * 2).keys()]);
     }
 
-    // Finds the shortest duration plan for a set of jobs, while satisfying
+    // Finds the shortest duration Route for a set of jobs, while satisfying
     // the following constraints:
     //    1. The first Action associated with each Job must appear before its
     //       corresponding second Action.
@@ -120,48 +120,48 @@ export class RoutePlanner {
     //   An array of jobs the cart should perform. The number of jobs should
     //   not exceed the `maxJobs` limit provided to the constructor.
     // time
-    //   The time at which the plan should start. This value is passed to the
+    //   The time at which the route should start. This value is passed to the
     //   estimator functions. This allows the estimator functions to model
     //   effects like rush hour conjestion.
     //
-    // Returns the Plan with the shortest working time that satisfies the
+    // Returns the Route with the shortest working time that satisfies the
     // constraints. Workiong time is defined as time that the cart is moving
     // between locations, waiting to load, loading, and unloading. It does
     // not include time when the cart is out of service.
     //
-    // Returns null if no Plan satisfies the constraints.
-    getBestRoute(cart: Cart, jobs: Job[], time: SimTime): Plan | null {
+    // Returns null if no Route satisfies the constraints.
+    getBestRoute(cart: Cart, jobs: Job[], time: SimTime): Route | null {
         let workingTime = Infinity;
-        let bestPlan: Plan | null = null;
-        let successfulPlanCount = 0;
-        this.failedPlanCount = 0;
+        let bestRoute: Route | null = null;
+        let successfulRouteCount = 0;
+        this.failedRouteCount = 0;
 
-        for (const plan of this.validPlansFromJobs(cart, jobs, time)) {
+        for (const route of this.validRoutesFromJobs(cart, jobs, time)) {
             if (this.logger) {
                 this.logger('=================');
                 this.logger('Succeeded:');
                 this.logger('')
-                this.explainPlan(plan, time, this.logger);
+                this.explainRoute(route, time, this.logger);
                 this.logger('')
             }
 
-            if (plan.workingTime < workingTime) {
-                ++successfulPlanCount;
-                workingTime = plan.workingTime;
-                bestPlan = plan;
+            if (route.workingTime < workingTime) {
+                ++successfulRouteCount;
+                workingTime = route.workingTime;
+                bestRoute = route;
             }
         }
         if (this.logger) {
             this.logger('');
-            this.logger(`Considered ${this.failedPlanCount} failed plans.`)
-            this.logger(`Considered ${successfulPlanCount} successful plans.`)
+            this.logger(`Considered ${this.failedRouteCount} failed routes.`)
+            this.logger(`Considered ${successfulRouteCount} successful routes.`)
         }
 
-        return bestPlan;
+        return bestRoute;
     }
 
-    // Enumerate all valid plans for a set of Jobs.
-    private *validPlansFromJobs(cart: Cart, jobs: Job[], time: SimTime): IterableIterator<Plan> {
+    // Enumerate all valid Routes for a set of Jobs.
+    private *validRoutesFromJobs(cart: Cart, jobs: Job[], time: SimTime): IterableIterator<Route> {
         if (jobs.length > this.maxJobs) {
             const message = `Too many jobs for cart ${cart.id}`;
             throw TypeError(message);
@@ -171,11 +171,11 @@ export class RoutePlanner {
         const actions = this.actionsFromJobs(jobs);
 
         const state = stateFromCart(cart, time);
-        yield* this.validPlansFromActions(this.permutations, cart, state, actions, []);
+        yield* this.validRoutesFromActions(this.permutations, cart, state, actions, []);
     }
 
-    // Enumerate all value plans from a set of Actions.
-    private *validPlansFromActions(trie: Trie, cart: Cart, previousState: PlanState, actions: (Action | null)[], head: Action[]): IterableIterator<Plan> {
+    // Enumerate all value Routes from a set of Actions.
+    private *validRoutesFromActions(trie: Trie, cart: Cart, previousState: RouteState, actions: (Action | null)[], head: Action[]): IterableIterator<Route> {
         let leafNode = true;
 
         for (const branch of trie) {
@@ -186,20 +186,20 @@ export class RoutePlanner {
                 const state = { ...previousState };
 
                 if (!this.applyAction(cart.capacity, state, action)) {
-                    ++this.failedPlanCount;
+                    ++this.failedRouteCount;
                     if (this.logger) {
                         this.logger('=================');
                         this.logger('Failed:');
                         this.logger('')
-                        const plan = { cart, actions: newHead, workingTime: state.workingTime, score: 0 };
-                        this.explainPlan(plan, state.startTime, this.logger);
+                        const route = { cart, actions: newHead, workingTime: state.workingTime, score: 0 };
+                        this.explainRoute(route, state.startTime, this.logger);
                         this.logger('')
                     }
 
                     return;
                 }
 
-                yield* this.validPlansFromActions(branch.children, cart, state, actions, newHead);
+                yield* this.validRoutesFromActions(branch.children, cart, state, actions, newHead);
             }
         }
     
@@ -215,9 +215,9 @@ export class RoutePlanner {
     // Simulate running a single Action.
     //
     // capacity
-    //   the capacity of the cart that will execute the plan.
+    //   the capacity of the cart that will execute the Route.
     // state
-    //   the state of the simulation at the start of the plan.
+    //   the state of the simulation at the start of the Route.
     // action
     //   the action to run
     // logger
@@ -236,7 +236,7 @@ export class RoutePlanner {
     // Unfortunately, it may not be feasible to share code because the
     // Environment simulator may use an entirely different approach (e.g. play
     // back a log or fuzz tasks with random errors).
-    private applyAction(capacity: number, state: PlanState, action: Action, logger: Logger | null = null ): boolean {
+    private applyAction(capacity: number, state: RouteState, action: Action, logger: Logger | null = null ): boolean {
         switch (action.type) {
             case ActionType.DROPOFF: {
                 if (logger) {
@@ -262,7 +262,7 @@ export class RoutePlanner {
                 state.quantityUnloaded += action.quantity;
 
                 if (state.time > action.time) {
-                    // This plan is invalid because it unloads after the deadline.
+                    // This Route is invalid because it unloads after the deadline.
                     if (logger) {
                         logger(`    ${state.time}: CONTRAINT VIOLATED - dropoff after deadline ${action.time}`);
                     }
@@ -314,7 +314,7 @@ export class RoutePlanner {
                 state.payload += action.quantity;
 
                 if (state.payload > capacity) {
-                    // This plan is invalid because its payload exceeds cart capacity.
+                    // This Route is invalid because its payload exceeds cart capacity.
                     if (logger) {
                         logger(`    ${state.time}: CONTRAINT VIOLATED - payload of ${state.payload} exceeds capacity of ${capacity}`);
                     }
@@ -339,15 +339,15 @@ export class RoutePlanner {
                     state.time += transitTime;
                     // NOTE: we do count transit time to suspend location as
                     // working time because this time, might have been put to
-                    // better use transporting items. Would not want a plan
+                    // better use transporting items. Would not want a Route
                     // that takes a long time driving to the suspend location
-                    // to score higher than a plan that was delivering items.
+                    // to score higher than a Route that was delivering items.
                     state.workingTime += transitTime;
                     state.location = action.location;
                 }
 
                 if (state.time > action.suspendTime) {
-                    // This plan is invalid because it suspends after the deadline.
+                    // This Route is invalid because it suspends after the deadline.
                     if (logger) {
                         logger(`    ${state.time}: CONTRAINT VIOLATED - suspends after deadline ${action.suspendTime}`);
                     }
@@ -386,7 +386,7 @@ export class RoutePlanner {
             logger(`    ${state.time}: completed`);
         }
 
-        // This plan was not shown to be invalid.
+        // This Route was not shown to be invalid.
         return true;
     }
 
@@ -453,19 +453,19 @@ export class RoutePlanner {
         return actions;
     }
 
-    // Debugging function gives running commentary on a simulated run of a Plan.
+    // Debugging function gives running commentary on a simulated run of a Route.
     // 
-    // plan
-    //   the Plan to explain
+    // route
+    //   the Route to explain
     // time
-    //   the time to start the Plan.
-    explainPlan(plan: Plan, time: SimTime, logger: Logger) {
-        logger(`Plan for cart ${plan.cart.id} (working time = ${plan.workingTime}, score = ${plan.score.toPrecision(3)}):`);
+    //   the time to start the Route.
+    explainRoute(route: Route, time: SimTime, logger: Logger) {
+        logger(`Route for cart ${route.cart.id} (working time = ${route.workingTime}, score = ${route.score.toPrecision(3)}):`);
     
-        const cart = plan.cart;
+        const cart = route.cart;
         const state = stateFromCart(cart, time);
 
-        for (const action of plan.actions) {
+        for (const action of route.actions) {
             if (!this.applyAction(cart.capacity, state, action, logger)) {
                 break;
             }
@@ -492,11 +492,11 @@ export function formatAction(action: Action): string {
     return `${s} (job ${action.job.id})`
 }
 
-// Debugging function. Prints a description to a Plan to the console.
-export function printPlan(plan: Plan) {
-    console.log(`Plan for cart ${plan.cart.id} (working time = ${plan.workingTime}):`);
+// Debugging function. Prints a description of a Route to the console.
+export function printRoute(route: Route) {
+    console.log(`Route for cart ${route.cart.id} (working time = ${route.workingTime}):`);
 
-    for (const action of plan.actions) {
+    for (const action of route.actions) {
         console.log(`  ${formatAction(action)}`);
     }
 }

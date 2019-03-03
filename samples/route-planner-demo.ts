@@ -42,7 +42,7 @@ function go() {
     // Construct the planner.
     const planner = new RoutePlanner(maxJobs, loadTimeEstimator, unloadTimeEstimator, transitTimeEstimator, logger);
 
-    // Plan starts at this time.
+    // Route starts at this time.
     const time = 0;
     
     // Find the best plan.
@@ -50,14 +50,14 @@ function go() {
     const plan = planner.getBestRoute(cart, jobs, time);
 
     console.log('#########################')
-    console.log('Planning Complete');
+    console.log('Route planning Complete');
     console.log('');
 
     if (plan) {
-        planner.explainPlan(plan, time, logger);
+        planner.explainRoute(plan, time, logger);
     }
     else {
-        console.log('No plan found.')
+        console.log('No route found.')
     }
 }
 

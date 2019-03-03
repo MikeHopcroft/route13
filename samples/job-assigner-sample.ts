@@ -1,6 +1,6 @@
 import * as seedrandom from 'seedrandom';
 
-import { Cart, CartFactory, Job, JobAssigner, LocationId, JobFactory, Plan, printPlan, RoutePlanner, SimTime } from '../src';
+import { Cart, CartFactory, Job, JobAssigner, LocationId, JobFactory, Route, printRoute, RoutePlanner, SimTime } from '../src';
 
 const random = seedrandom("seed");
 
@@ -69,9 +69,9 @@ function go() {
     for (const [cart, assignment] of assignments) {
         console.log('------------------------------------------------------');
         console.log(`Cart ${cart.id}: [${assignment.jobs.map((x) => x.id).join(',')}]`);
-        const plan = routePlanner.getBestRoute(cart, assignment.jobs, startTime) as Plan;
+        const plan = routePlanner.getBestRoute(cart, assignment.jobs, startTime) as Route;
         // routePlanner.explainPlan(plan, 0, console.log);
-        printPlan(plan);
+        printRoute(plan);
     }
 
     console.log('');

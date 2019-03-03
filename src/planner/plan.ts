@@ -59,16 +59,16 @@ export type Action = DropoffAction | PickupAction | SuspendAction;
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Plan
+// Route
 //
-// A Plan is an ordered sequence of Actions. Typically, the Actions that
-// make up a Plan are the union of the Actions associated with a number of
+// A Route is an ordered sequence of Actions. Typically, the Actions that
+// make up a Route are the union of the Actions associated with a number of
 // Jobs.
 //
-// A Plan represents the interleaving of Actions requires to perform a set
+// A Route represents the interleaving of Actions requires to perform a set
 // of Jobs.
 //
-// Without the concept of a Plan, it would not be possible to interleave the
+// Without the concept of a Route, it would not be possible to interleave the
 // Actions of multiple Jobs. This would preclude opportunities like picking
 // up items for Job B, while tranporting items for Job A, e.g.
 //
@@ -78,7 +78,7 @@ export type Action = DropoffAction | PickupAction | SuspendAction;
 //   Job B: dropoff 7 at location 5.
 //
 ///////////////////////////////////////////////////////////////////////////////
-export interface Plan {
+export interface Route {
     cart: Cart;
     actions: Action[];
     workingTime: SimTime;
