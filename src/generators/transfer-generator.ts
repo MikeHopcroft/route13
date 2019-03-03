@@ -4,8 +4,14 @@ import { Gaussian } from 'ts-gaussian';
 import { Clock, NextStep, SimTime, start } from '../core';
 import { JobFactory, LocationId, TransferJob } from '../environement';
 
+// Unique id for a journey (e.g. flight number, train number, etc.)
 export type JourneyId = number;
 
+// Represents a scheduled arrival. This is a plane, vessel, train, etc. that
+// makes items available at a berth. Random arrivals are initially generated
+// without undefined values for `location` and `earliestConnection`. These
+// fields are filled in later once the required number of berths has been
+// determined and the random departures have been generated.
 export interface Arrival {
     id: JourneyId;
     time: SimTime;
@@ -13,22 +19,34 @@ export interface Arrival {
     earliestConnection?: number;
 }
 
+// Represents a scheduled departure of a plane, vessel, train, etc. Random
+// departures are initially generated with undefined `location` values.
+// Locations are assigned later once the required number of berths has been
+// determined. This algorithm generates one departure for each arriving
+// carrier.
 export interface Departure {
     id: JourneyId;
     time: SimTime;
     location?: LocationId
 }
 
+// Each arriving carrier turns around and departs. The `TurnAround` pairs an
+// arrival with its corresponding departure. It also hold the set of
+// `TransferJobs` of items to be moved from the arrival to another location.
 export interface TurnAround {
     arrival: Arrival;
     departure: Departure;
     jobs: TransferJob[];
 }
 
+// A berth is a location where a carrier parks (e.g. a gate, dock, loading
+// dock, platform, etc.)
 interface Berth {
     location: LocationId;
 }
 
+// Used to construct a monotonically increasing sequence of non-negative
+// integer values to be used as unique ids.
 class IdFactory {
     nextId: number = 0;
 
@@ -67,6 +85,31 @@ export class TransferGenerator {
 
     private readonly transfers: TransferJob[];
 
+    // The act of constructing a TransferGenerator kicks off generation of a
+    // schedule of random arrivals, departures, and transfer jobs. Once the
+    // constructor returns, these items can be inspected using the public
+    // accessor functions.
+    //
+    // Parameters
+    // arrivalCount
+    //    Number of random arrivals to construct.
+    //
+    // lastestArrivalTime
+    //    Random arrivals will be scheduleded between time 0 and the specified
+    //    time.
+    //
+    // turnAroundTime
+    //    The time between an arrival and its corresponding departure.
+    //    Currently all departures are scheduled at this offset from their
+    //    corresponding arrivals. There is no random delay.
+    //
+    // minConnectionTime
+    //    Random transfers will only be generated for connections that allow
+    //    at least the minConnectionTime for transfers.
+    //
+    // maxItemsPerTransfer
+    //    Generated transfers will have at least one item, and no more than
+    //    maxItemsPerTransfer.
     constructor(
         arrivalCount: number,
         latestArrivalTime: SimTime,
@@ -157,23 +200,32 @@ export class TransferGenerator {
         return this.berths.length;
     }
 
-    // Generator of TransferJobs.
+    // Generator enumerates TransferJobs created during class construction.
     jobs() {
         return this.transfers[Symbol.iterator]();
     }
 
+    // Returns the number of TransferJobs created during construction.
     getJobCount() {
         return this.transfers.length;
     }
 
+    // Generator enumerates TurnArounds created during class construction.
     getTurnArounds() {
         return this.turnArounds[Symbol.iterator]();
     }
 
+    // Returns the number of TurnArounds created during construction.
     getTurnAroundCount() {
         return this.turnArounds.length;
     }
 
+    // Labels each Arrival with the index of the earliest departure that is at
+    // least minConnectionTime in the future. This Departure and those that
+    // follow are candidates for random transfers from the Arrival.
+    //
+    // Some Arrivals may not allow connections to any Departures. These
+    // Arrivals will have an undefined value for their earliestConnection.
     private determineEarliestConnections() {
         if (this.departures.length > 0) {
             let earliestConnection = 0;
@@ -189,6 +241,9 @@ export class TransferGenerator {
         }
     }
 
+    // Simulator agent that assigns a Berth to a TurnAround.
+    // Will allocate a new Berth if all currently existing Berths happen to be
+    // occupied.
     private *assignBerth(turnAround: TurnAround): IterableIterator<NextStep> {
         yield this.clock.until(turnAround.arrival.time);
         const berth = this.allocateRandomBerth();
@@ -202,6 +257,8 @@ export class TransferGenerator {
         this.releaseBerth(berth);
     }
 
+    // Allocates a randomly selected Berth if one is available. Otherwise
+    // creates a new Berth.
     private allocateRandomBerth(): LocationId {
         let berth = this.berths.pop();
         if (berth === undefined) {
@@ -218,16 +275,21 @@ export class TransferGenerator {
         }
     }
 
+    // Returns a Berth to the pool of unoccupied Berths.
     private releaseBerth(berth: LocationId) {
         this.berths.push(berth);
     }
 
+    // Creates a random arrival between time 0 and the latestArrivalTime.
     private randomArrival(latestArrivalTime: SimTime): Arrival {
         const id = this.journeyFactory.id();
         const time = this.randomInRange(0, latestArrivalTime);
         return { id, time };
     }
 
+    // Given an Arrival, creates a random departure that can be used to form
+    // a TurnAround. NOTE that the random departure may be scheduled after
+    // the latestArrivalTime.
     private randomTurnAround(arrival: Arrival): TurnAround {
         const id = this.journeyFactory.id();
         const time = arrival.time + this.turnAroundTime;
@@ -238,7 +300,8 @@ export class TransferGenerator {
         }
     }
 
-
+    // A simulator agent that constructs random transfer jobs for a particular
+    // arrival.
     private *randomTransferJobs(arrival: Arrival): IterableIterator<TransferJob> {
         if (arrival.earliestConnection !== undefined) {
             for (let i = arrival.earliestConnection; i < this.departures.length; ++i) {
