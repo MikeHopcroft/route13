@@ -3,6 +3,11 @@
 This is a very rough `TODO` list that captures issues encountered
 while coding during the early stages when the codebase is too fluid to benefit from a formal issue tracking system. This list will be cleaned up over time and eventually migrated to GitHub issues.
 
+* Rename `Plan` to `Route`.
+* Rename `Assignment` to `Plan`.
+* Introduce planning cycle.
+* Introduce pluggable one-off planner.
+
 * ~~Rename `Continuation` to `Agent`~~
 * StaffingPlan. Finish implementing. Write unit tests. Add to simulation.
 * TransferGenerator. Implement. Write unit tests. Add to simulation.
