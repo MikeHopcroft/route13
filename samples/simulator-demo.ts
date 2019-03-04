@@ -55,7 +55,7 @@ function go() {
     );
 
     // The Dispatcher class assigns Jobs to Drivers.
-    const dispatcher = new Dispatcher(clock, environment, trace);
+    const dispatcher = new Dispatcher(clock, environment, trace, null);
 
     // The Driver performs the sequence of Actions necessary to complete the
     // set of assigned Jobs.

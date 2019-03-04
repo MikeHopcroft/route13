@@ -1,5 +1,6 @@
 import { Agent, Clock, Condition, NextStep, SimTime } from '../core';
-import { Environment, Job, Trace } from '../environement';
+import { Cart, Environment, Job, Trace } from '../environement';
+import { JobAssigner, merge2 } from '../planner';
 
 // The Dispatcher class assigns Jobs to Drivers.
 //
@@ -14,18 +15,31 @@ export class Dispatcher {
     private readonly clock: Clock;
     private readonly env: Environment;
     private readonly trace: Trace;
+    private readonly planner: JobAssigner | null;
 
-    private shuttingDown: boolean;
+    // TOOD: planningTime should be a parameter.
+    private readonly planningTime = 5000;
+
+    shuttingDown: boolean;
     private readonly jobAvailableCondition: Condition;
 
-    constructor(clock: Clock, env: Environment, trace: Trace) {
+    currentPlan: Map<Cart, Job[]>;
+    currentPlanTime: SimTime;
+    private newPlanAvailable: Condition;
+
+    constructor(clock: Clock, env: Environment, trace: Trace, planner: JobAssigner | null) {
         this.clock = clock;
         this.env = env;
         this.trace = trace;
+        this.planner = planner;
 
         this.shuttingDown = false;
 
         this.jobAvailableCondition = new Condition();
+
+        this.currentPlan = new Map<Cart, Job[]>();
+        this.currentPlanTime = -Infinity;
+        this.newPlanAvailable = new Condition();
     }
 
     // updateJob?
@@ -34,6 +48,18 @@ export class Dispatcher {
     waitForJob(): NextStep {
         return (agent: Agent) => {
             this.jobAvailableCondition.sleep(agent);
+        }
+    }
+
+    private waitForPlan(): NextStep {
+        return (agent: Agent) => {
+            this.newPlanAvailable.sleep(agent);
+        }
+    }
+
+    *waitForNextPlan(planTime: SimTime) {
+        if (planTime >= this.currentPlanTime && !this.shuttingDown) {
+            yield this.waitForPlan();
         }
     }
 
@@ -64,8 +90,10 @@ export class Dispatcher {
     // NOTE: Currently the planner does nothing, but the loop runs to
     // demonstrate the pattern.
     *planningLoop() {
-        while (!this.shuttingDown) {
-            yield* this.updateJobAssignments();
+        if (this.planner) {
+            while (!this.shuttingDown) {
+                yield* this.updateJobAssignments();
+            }
         }
     }
 
@@ -80,18 +108,25 @@ export class Dispatcher {
             //   Send cart and job state to planner.
             //   Get back new collection of job assignments.
 
+            const carts = this.env.cartSnapshot();
+            const jobs = this.env.jobSnapshot(carts);
+            const planReadyTime = this.clock.time + this.planningTime;
+
             // For now, just simulate time to plan.
             // In a real implementation, planning might happen out of process,
             // or, potentially, on another server.
-            const planningTime = 5000;
-            yield this.clock.until(this.clock.time + planningTime);
+            yield this.clock.until(planReadyTime);
+
+            // Create new plan.
+            const plan =
+                (this.planner as JobAssigner).createAssignment(jobs.values(), carts.values(), planReadyTime);
+
+            this.currentPlan = merge2(this.env.fleet, this.env.jobs, plan);
 
             this.trace.plannerFinished();
 
-            // TODO: Implement
-            // Apply job assignments.
-            //   Merge each new assignment into an existing assignment.
-            // For now, simulate application of plan by doing nothing.
+            // Notify all waiting drivers of the new plan.
+            this.newPlanAvailable.wakeAll();
         }
     }
 

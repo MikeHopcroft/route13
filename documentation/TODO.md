@@ -3,10 +3,23 @@
 This is a very rough `TODO` list that captures issues encountered
 while coding during the early stages when the codebase is too fluid to benefit from a formal issue tracking system. This list will be cleaned up over time and eventually migrated to GitHub issues.
 
-* Rename `Plan` to `Route`.
-* Rename `Assignment` to `Plan`.
-* Introduce planning cycle.
+* ~~Rename `Plan` to `Route`.~~
+* ~~Rename `Assignment` to `Plan`.~~
+* ~~Introduce planning cycle.~~
 * Introduce pluggable one-off planner.
+  * interface Planner
+  * JobAssigner implements Planner
+* Dispatcher.planningTime should be a constructor parameter
+* Type for Plan = Map<Cart, Job[]>. How does new work?
+* Unify Driver.drive() and Driver.drive2(). Pluggable incremental planner.
+* Replanning when Planner generates a job assignment that is no longer feasible - race condition
+* Policy for marking failed/succeeded jobs.
+* Removing active jobs from list
+* Review Cart vs CartId, Job vs JobId
+* Review Environment publics like fleet and unassignedJobs
+* Dead code in JobMerger
+* merge() vs merge2()
+
 
 * ~~Rename `Continuation` to `Agent`~~
 * StaffingPlan. Finish implementing. Write unit tests. Add to simulation.

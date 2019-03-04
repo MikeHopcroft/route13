@@ -1,4 +1,4 @@
-import { Cart, CartId, Job } from "../environement";
+import { Cart, CartId, Job, JobId } from "../environement";
 import { LoadTimeEstimator, RouteNextStep, TransitTimeEstimator, UnloadTimeEstimator } from '../estimators';
 import { RoutePlanner } from '../planner';
 import { Trace } from './trace';
@@ -29,11 +29,13 @@ export class Environment {
     //
     // The fleet.
     //
-    private fleet: Map<CartId, Cart>;
+    fleet: Map<CartId, Cart>;
 
     //
     // Job related
     //
+    jobs: Map<JobId, Job>;
+
     unassignedJobs: Job[];
 
     assignedJobs: Set<Job>;
@@ -69,6 +71,7 @@ export class Environment {
 
         this.fleet = new Map<CartId, Cart>();
 
+        this.jobs = new Map<JobId, Job>();
         this.unassignedJobs = [];
 
         this.assignedJobs = new Set<Job>();
@@ -91,6 +94,44 @@ export class Environment {
             throw TypeError(message);
         }
         this.fleet.set(cart.id, cart);
+    }
+
+    // Used at the beginning of a planning cycle.
+    // The cartSnapshot() method makes a copy of a set of Carts, indexed by CartId.
+    // The copied Carts are distinct from the originals.
+    cartSnapshot() {
+        const copy = new Map<CartId, Cart>();
+
+        // Copy over the carts, indexing each by its id.
+        // WARNING: This code is brittle because it relies on knowledge of
+        // that all fields of Cart are primitive.
+        for (const cart of this.fleet.values()) {
+            copy.set(cart.id, {...cart});
+        }
+    
+        return copy;
+    }
+
+    // Used at the beginning of a planning cycle.
+    // The jobSnapshot() method makes a copy of a set of Jobs, indexed by JobId.
+    // As each job is copied, its assignedTo field, if not null, is replaced by
+    // a reference to the corresponding Cart in `cartsCopy`. 
+    jobSnapshot(cartsCopy: Map<CartId, Cart>): Map<JobId, Job> {
+        const copy = new Map<JobId, Job>();
+
+        // Copy over jobs, indexing each by its id.
+        // If assignedTo is set, use its copy.
+        // WARNING: This code is brittle because it relies on knowledge of
+        // which fields of Job are primitives.
+        for (const job of this.jobs.values()) {
+            let assignedTo = null;
+            if (job.assignedTo) {
+                assignedTo = cartsCopy.get(job.assignedTo.id) as Cart;
+            }
+            copy.set(job.id, {...job, assignedTo});
+        }
+
+        return copy;
     }
 
     // Marks a job as being assigned to a Cart and adds the job to the set

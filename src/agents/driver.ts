@@ -45,6 +45,63 @@ export class Driver {
         }
     }
 
+    // Agent that continuosly operates a single cart.
+    // This implementation takes new job assignments from the planning cycle.
+    *drive2(cart: Cart): Agent {
+        let currentPlanTime: SimTime = -Infinity;
+        while (true) {
+            // Wait for a new plan.
+            yield *this.dispatcher.waitForNextPlan(currentPlanTime);
+
+            // If we're shutting down, break out of the loop.
+            if (this.dispatcher.shuttingDown) {
+                break;
+            }
+
+            const jobs = this.dispatcher.currentPlan.get(cart);
+            if (!jobs) {
+                // There is no plan for this cart.
+                // This seems like a bug, vs an empty plan.
+                // TODO: Log or throw?
+                throw TypeError();
+            }
+            else {
+                // Begin executing the plan.
+                yield* this.findRouteAndGo(cart, currentPlanTime, jobs);
+            }
+        }
+    }
+
+    private *findRouteAndGo(cart: Cart, currentPlanTime: SimTime, jobs: Job[]) {
+        // Find a route that performs this list of jobs.
+        const route = this.env.routePlanner.getBestRoute(cart, jobs, this.clock.time);
+
+        if (!route) {
+            // No route was found for this cart to complete this job.
+            // THIS SHOULD NEVER HAPPEN, IF PLANNER PLANS FOR CORRECT TIME.
+            // SOME RACE CONDITIONS MIGHT ALLOW THIS.
+            //   start driving
+            //   planner finishes
+            //   much later finish driving
+            //   now it's too late for plan to work
+            // PROBABLY NEED SOME REPLAN STRATEGY WITH FEWER JOBS.
+            // TODO: Handlr this case.
+            throw TypeError();
+            // this.env.failJob(job);
+        }
+        else {
+            // Execute planned route, one action at a time.
+            for (const action of route.actions) {
+                if (currentPlanTime < this.dispatcher.currentPlanTime) {
+                    // There's a new plan available. Break out of the loop to
+                    // allow caller to merge in new plan.
+                    break;
+                }
+                yield* this.performOneAction(cart, action);
+            }
+        }
+    }
+
     // Agent that performs a sequence of Actions.
     private *performActionSequence(cart: Cart, actions: Action[]) {
         for (const action of actions) {
@@ -77,7 +134,12 @@ export class Driver {
     private *pickup(cart: Cart, action: PickupAction) {
         yield* this.driveTo(cart, action.location);
         yield* this.waitUntil(cart, action.time);
+
+        // Once we've finished waiting and started loading, we must claim this
+        // job so it cannot be assigned to any other card.
         action.job.state = TransferJobState.ENROUTE;
+        action.job.assignedTo = cart;
+
         yield* this.load(cart, action.quantity);
     }
 
