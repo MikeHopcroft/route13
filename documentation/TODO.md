@@ -3,6 +3,8 @@
 This is a very rough `TODO` list that captures issues encountered
 while coding during the early stages when the codebase is too fluid to benefit from a formal issue tracking system. This list will be cleaned up over time and eventually migrated to GitHub issues.
 
+* Format all time values in logs and other output.
+* Document interpretation of time.
 * ~~Rename `Plan` to `Route`.~~
 * ~~Rename `Assignment` to `Plan`.~~
 * ~~Introduce planning cycle.~~

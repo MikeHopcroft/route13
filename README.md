@@ -135,10 +135,10 @@ This sample demonstrates route planning for a single `Cart`. In this case the
 
 We would like to determine ordering of pickups and dropoffs that minimizes working time.
 
-In this sample, the `RoutePlanner` has been configured to print out those plans it considered.
-Failed plans are those that were rejected because they violated constraints, such as
-delivery deadlines and cart capacities. Successful plans are given a score that represents
-the rate at which the plan moves items (items unloaded per unit working time).
+In this sample, the `RoutePlanner` has been configured to print out those routes it considered.
+Failed routes are those that were rejected because they violated constraints, such as
+delivery deadlines and cart capacities. Successful routes are given a score that represents
+the rate at which the cart moves items (items unloaded per unit working time).
 
 ~~~
 =================
@@ -222,7 +222,7 @@ DROPOFF 5 items at location 4 before 3000 (job 1)
 
 
 Considered 16 failed routes.
-Considered 3 successful route.
+Considered 3 successful routes.
 #########################
 Routing Complete
 
@@ -254,7 +254,8 @@ SUSPEND at location 7 before 3000 until 4000 (job 2)
 
 ### Graph Sample
 
-The `Graph` class uses the [Floyd-Warshall algorithm](https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm)
+The `Graph` class uses the
+[Floyd-Warshall algorithm](https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm)
 to compute travel times and
 paths through a directed graph with weighted edges. The `Graph.cost()` and
 `Graph.next()` methods can be used to supply the `TransitTimeEstimator` and
@@ -309,16 +310,24 @@ Next
 The `JobAssigner` class performs a brute force search of
 assignments of tuples of `Jobs` to `Carts`. It filters out those
 assignments that fail to satisfy constraints
-(e.g. those that exceed cart capacities or fail to meet delivery deadlines). Remaining assignments are then scored by the number
+(e.g. those that exceed cart capacities or fail to meet delivery deadlines).
+Remaining assignments are then scored by the number
 of items delivered per unit of working time. A greedy algorithm 
 is then used to pick a non-conflicting subset of assignments.
 Two assignments are considered to conflict if they
 share either `Jobs` or `Carts`.
 
-The run, below, examines assignments consisting of of one, two, or three jobs. It ends up assigning three jobs to `Carts` 1, 2, and 4, and one job to `Cart 3`.
-There is room for improvement here because `Cart` 5 was left without an assignment. This happened because the cost function maximized item throughput for each `Cart` individually, rather than system-wide.
+The run below examines assignments consisting of of one, two, or three jobs.
+It ends up assigning three jobs to `Carts` 1, 2, and 4, and one job to `Cart 3`.
+There is room for improvement here because `Cart` 5 was left without an assignment.
+This happened because the cost function maximized item throughput for each `Cart` individually,
+rather than system-wide.
 
-It is an open question whether to maximize fleet utilization or system throughput. One the one hand, is seems problematic for some `Carts` to be idle, but the plan did manage to complete all of the jobs before their deadlines. On the other hand, an approach that maximizes fleet utilization might complete deliveries earlier, giving greater resilience in the face of delays.
+It is an open question whether to maximize fleet utilization or system throughput.
+On the one hand, it seems problematic for some `Carts` to sit idle,
+but the plan did manage to complete all of the jobs before their deadlines.
+On the other hand, an approach that maximizes fleet utilization
+might complete deliveries earlier, giving greater resilience in the face of delays.
 
 ~~~
 % node build/samples/job-assigner-sample.js
