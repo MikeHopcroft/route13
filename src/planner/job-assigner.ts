@@ -3,13 +3,9 @@ import { Cart, Job } from '../environement';
 import { LoadTimeEstimator, TransitTimeEstimator, UnloadTimeEstimator } from '../estimators';
 
 import { combinations } from './combinations';
+import { Assignment, Planner } from './planner';
 import { RoutePlanner } from './route-planner';
 
-export interface Assignment {
-    cart: Cart,
-    jobs: Job[],
-    score: number
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -19,7 +15,7 @@ export interface Assignment {
 // Then greedy selection from enumerated job assignments.
 //
 ///////////////////////////////////////////////////////////////////////////////
-export class JobAssigner {
+export class JobAssigner implements Planner {
     private readonly maxJobCount: number;
     private readonly routePlanner: RoutePlanner;
 

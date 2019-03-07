@@ -35,10 +35,8 @@ export class Environment {
     // Job related
     //
     jobs: Map<JobId, Job>;
-
     unassignedJobs: Job[];
 
-    assignedJobs: Set<Job>;
     successfulJobs: Job[];
     failedJobs: Job[];
 
@@ -74,7 +72,6 @@ export class Environment {
         this.jobs = new Map<JobId, Job>();
         this.unassignedJobs = [];
 
-        this.assignedJobs = new Set<Job>();
         this.successfulJobs = [];
         this.failedJobs = [];
 
@@ -134,11 +131,24 @@ export class Environment {
         return copy;
     }
 
+    // Adds a Job to the Environment or replaces an existing Job with a new
+    // definition.
+    //
+    // NOTE that updated job will not become visible to Carts until new plan
+    // has been merged.
+    addJob(job: Job) {
+        this.jobs.set(job.id, job);
+
+        // TODO: BUG: The following ling does not update a job. It just adds
+        // another copy. Leaving this in as it is temporary code. Eventually
+        // all job dispatch will be based on this.jobs.
+        this.unassignedJobs.push(job);
+    }
+
     // Marks a job as being assigned to a Cart and adds the job to the set
     // of assigned jobs.
     assignJob(job: Job, cart: Cart)
     {
-        this.assignedJobs.add(job);
         job.assignedTo = cart;
         if (this.trace) {
             this.trace.jobAssigned(job);
@@ -147,8 +157,7 @@ export class Environment {
 
     completeJob(job: Job)
     {
-        // Check for job not already assigned.
-        this.assignedJobs.delete(job);
+        this.jobs.delete(job.id);
         this.successfulJobs.push(job);
         if (this.trace) {
             this.trace.jobSucceeded(job);
@@ -157,8 +166,7 @@ export class Environment {
 
     failJob(job: Job)
     {
-        // Check for job not already assigned.
-        this.assignedJobs.delete(job);
+        this.jobs.delete(job.id);
         this.failedJobs.push(job);
         if (this.trace) {
             this.trace.jobFailed(job);

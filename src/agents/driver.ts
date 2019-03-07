@@ -27,20 +27,31 @@ export class Driver {
             // Wait for a job to become available.
             yield this.dispatcher.waitForJob();
 
-            // Select a job, FIFO order.
-            const job = this.env.unassignedJobs.shift() as Job;
-            this.env.assignJob(job, cart);
+            // let job = null;
+            // for (const j of this.env.jobs.values()) {
+            //     if (!j.assignedTo) {
+            //         job = j;
+            //         break;
+            //     }
+            // }
 
-            // Convert job to a plan.
-            const plan = this.env.routePlanner.getBestRoute(cart, [job], this.clock.time);
+            // if (job) {
+            {
+                // Select a job, FIFO order.
+                const job = this.env.unassignedJobs.shift() as Job;
+                this.env.assignJob(job, cart);
 
-            // Execute plan.
-            if (plan) {
-                yield* this.performActionSequence(cart, plan.actions);
-            }
-            else {
-                // There is no plan for this cart to complete this job.
-                this.env.failJob(job);
+                // Convert job to a plan.
+                const plan = this.env.routePlanner.getBestRoute(cart, [job], this.clock.time);
+
+                // Execute plan.
+                if (plan) {
+                    yield* this.performActionSequence(cart, plan.actions);
+                }
+                else {
+                    // There is no plan for this cart to complete this job.
+                    this.env.failJob(job);
+                }
             }
         }
     }

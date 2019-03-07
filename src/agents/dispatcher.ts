@@ -1,6 +1,6 @@
 import { Agent, Clock, Condition, NextStep, SimTime } from '../core';
 import { Cart, Environment, Job, Trace } from '../environement';
-import { JobAssigner, merge2 } from '../planner';
+import { merge2, Planner } from '../planner';
 
 // The Dispatcher class assigns Jobs to Drivers.
 //
@@ -15,9 +15,10 @@ export class Dispatcher {
     private readonly clock: Clock;
     private readonly env: Environment;
     private readonly trace: Trace;
-    private readonly planner: JobAssigner | null;
+    private readonly planner: Planner | null;
 
     // TOOD: planningTime should be a parameter.
+    // Or it could be provided by the Planner.
     private readonly planningTime = 5000;
 
     shuttingDown: boolean;
@@ -27,7 +28,7 @@ export class Dispatcher {
     currentPlanTime: SimTime;
     private newPlanAvailable: Condition;
 
-    constructor(clock: Clock, env: Environment, trace: Trace, planner: JobAssigner | null) {
+    constructor(clock: Clock, env: Environment, trace: Trace, planner: Planner | null) {
         this.clock = clock;
         this.env = env;
         this.trace = trace;
@@ -76,13 +77,10 @@ export class Dispatcher {
         // Wait until it is time to introduce the Job.
         yield this.clock.until(time);
 
-        if (job.assignedTo) {
-            const message = `Job ${job.assignedTo} already assigned to Cart ${job.assignedTo.id}`;
-            throw TypeError(message);
-        }
+        // Add the job to the environment.
+        this.env.addJob(job);
 
         // Add the job to the list of unassigned jobs.
-        this.env.unassignedJobs.push(job);
         this.jobAvailableCondition.wakeOne();
     }
 
@@ -119,7 +117,7 @@ export class Dispatcher {
 
             // Create new plan.
             const plan =
-                (this.planner as JobAssigner).createAssignment(jobs.values(), carts.values(), planReadyTime);
+                (this.planner as Planner).createAssignment(jobs.values(), carts.values(), planReadyTime);
 
             this.currentPlan = merge2(this.env.fleet, this.env.jobs, plan);
 
