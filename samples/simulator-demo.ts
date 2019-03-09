@@ -4,12 +4,16 @@ import {
     Dispatcher,
     Driver,
     Environment,
+    formatTimeHMS,
     Job,
     JobFactory,
     LocationId,
+    MINUTE,
+    SECOND,
     SimTime,
     start,
-    TextTrace
+    TextTrace,
+    time
 } from '../src';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -35,7 +39,7 @@ function go() {
     // Trace output lines consist of the time, followed by a description of the
     // activity. For readability, lines associated with the same Cart have the
     // same color.
-    const trace = new TextTrace(clock, console.log );
+    const trace = new TextTrace(clock, formatTimeHMS, console.log );
 
     // The Environment class holds the state of the world. This state includes
     //   1. estimator functions that model physical activities in the world,
@@ -78,17 +82,17 @@ function go() {
     //
     const jobFactory = new JobFactory();
     const jobs: Job[] = [
-        // Move 5 items from location 2 to 10 between the times 300 and 3000.
-        jobFactory.transfer(5, 2, 300, 10, 3000),
+        // Move 5 items from location 2 to 10 between the times 0:03 and 0:30.
+        jobFactory.transfer(5, 2, time(0,3), 10, time(0,30)),
 
-        // Move 5 items from location 3 to 4 between the times 300 and 3000.
-        jobFactory.transfer(5, 3, 300, 4, 3000),
+        // Move 5 items from location 3 to 4 between the times 0:03 and 0:25.
+        jobFactory.transfer(6, 3, time(0,3), 4, time(0,25)),
 
-        // Go out of service at location 7 between the times 3000 and 4000.
-        jobFactory.outOfService(7, 3000, 4000),
+        // Go out of service at location 9 between the times 0:30 and 0:40.
+        jobFactory.outOfService(9, time(0,30), time(0,40)),
 
-        // Move 7 items from location 8 to 4 between the times 1300 and 3000.
-        jobFactory.transfer(7, 8, 1300, 4, 3000)
+        // Move 9 items from location 7 to 4 between the times 0:13 and 0:27.
+        jobFactory.transfer(9, 7, time(0,13), 4, time(0,27))
     ];
 
     // Starting at time zero, make the dispatcher aware of all of the Jobs on
@@ -132,7 +136,7 @@ function go() {
 // NOTE: this function can be generated from a directed graph, using the
 // the Graph class in src/estimators.
 function transitTimeEstimator(origin: LocationId, destination: LocationId, startTime: SimTime): SimTime {
-    return Math.abs(destination - origin) * 100;
+    return Math.abs(destination - origin) * MINUTE;
 }
 
 // This function gives the next location along the path from the specified
@@ -158,13 +162,13 @@ function routeNextStep(origin: LocationId, destination: LocationId) {
 // The loadTimeEstimator models the time to load items onto a cart. Loading an
 // item takes 5 units of time. 
 function loadTimeEstimator(location: LocationId, quantity: number, startTime: SimTime): SimTime {
-    return 5 * quantity;
+    return 30 * SECOND * quantity;
 }
 
 // The unloadTimeEstimator models the time to unload items from a cart.
 // Unloading an item takes 2 units of time. 
 function unloadTimeEstimator(location: LocationId, quantity: number, startTime: SimTime): SimTime {
-    return 2 * quantity;
+    return 10 * SECOND * quantity;
 }
 
 

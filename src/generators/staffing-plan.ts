@@ -1,13 +1,5 @@
-import { Clock, SimTime, start } from "../core";
+import { Clock, HOUR, MAX_DATE, MINUTE, MIN_DATE, SECOND, SimTime, start } from "../core";
 import { Cart, CartFactory, JobFactory, LocationId, OutOfServiceJob, Job } from "../environement";
-
-// Mapping from common time units to the milliseconds used by the Date class.
-export const SECOND = 1000;
-export const MINUTE = SECOND * 60;
-export const HOUR = MINUTE * 60;
-
-export const MIN_DATE = -8640000000000000;
-export const MAX_DATE = 8640000000000000;
 
 // An interval of time.
 // The start time should never exceed the end ime.

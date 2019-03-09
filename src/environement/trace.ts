@@ -38,6 +38,9 @@ export interface Trace {
     plannerFinished(): void;
 }
 
+export type TraceWriter = (text: string) => void;
+export type TimeFormatter = (time: number) => string;
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // The TextTrace class logs trace information to the console in human-readable,
@@ -57,6 +60,7 @@ export interface Trace {
 ///////////////////////////////////////////////////////////////////////////////
 export class TextTrace implements Trace {
     clock: Clock;
+    formatTime: TimeFormatter;
     output: (text: string) => void;
 
     colors = [
@@ -80,13 +84,14 @@ export class TextTrace implements Trace {
     // output
     //    Function to display output. Use console.log to display
     //    to the console.
-    constructor(clock: Clock, output: (text: string) => void) {
+    constructor(clock: Clock, timeFormatter: TimeFormatter, output: TraceWriter) {
         this.clock = clock;
+        this.formatTime = timeFormatter;
         this.output = output;
     }
 
     private format(cart: Cart | null, text: string) {
-        let line = `${this.clock.time}: ${text}`;
+        let line = `${this.formatTime(this.clock.time)} ${text}`;
         if (cart) {
             line = this.colors[cart.id % this.colors.length](line);
         }
@@ -110,7 +115,7 @@ export class TextTrace implements Trace {
     }
 
     cartWaits(cart: Cart, time: SimTime): void {
-        this.format(cart, `Cart ${cart.id} waits until ${time}.`);
+        this.format(cart, `Cart ${cart.id} waits until ${this.formatTime(time)}.`);
     }
 
     cartBeginsLoading(cart: Cart, quantity: number): void {
@@ -161,4 +166,18 @@ export class TextTrace implements Trace {
     plannerFinished(): void {
         this.format(null, `Planning cycle finished.`);
     }
+}
+
+export function formatTimeHM(time: number) {
+    const date = new Date(time);
+    const dateString = date.toISOString();
+    const hm = dateString.slice(-13,-8);
+    return hm;
+}
+
+export function formatTimeHMS(time: number) {
+    const date = new Date(time);
+    const dateString = date.toISOString();
+    const hms = dateString.slice(-13,-5);
+    return hms;
 }

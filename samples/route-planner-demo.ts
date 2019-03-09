@@ -1,5 +1,4 @@
-import { CartFactory, Job, JobFactory, LocationId, RoutePlanner, SimTime } from '../src';
-
+import { CartFactory, Job, JobFactory, LocationId, RoutePlanner, SimTime, time } from '../src';
 
 function transitTimeEstimator(origin: LocationId, destination: LocationId, startTime: SimTime): SimTime {
     return Math.abs(destination - origin) * 100;
@@ -26,13 +25,13 @@ function go() {
     const jobFactory = new JobFactory();
     const jobs: Job[] = [
         // Move 5 items from location 2 to 10 between the times 300 and 3000.
-        jobFactory.transfer(5, 2, 300, 10, 3000),
+        jobFactory.transfer(5, 2, time(0,3), 10, time(0,30)),
 
-        // Move 5 items from location 3 to 4 between the times 300 and 3000.
-        jobFactory.transfer(5, 3, 300, 4, 3000),
+        // Move 4 items from location 3 to 4 between the times 300 and 3000.
+        jobFactory.transfer(4, 3, time(0,3), 4, time(0,30)),
 
         // Go out of service at location 7 between the times 3000 and 4000.
-        jobFactory.outOfService(7, 3000, 4000),
+        jobFactory.outOfService(9, time(0,30), time(0,40)),
     ];
 
     // Planning route for the following cart:
@@ -43,18 +42,18 @@ function go() {
     const planner = new RoutePlanner(maxJobs, loadTimeEstimator, unloadTimeEstimator, transitTimeEstimator, logger);
 
     // Route starts at this time.
-    const time = 0;
+    const startTime = 0;
     
     // Find the best plan.
     // TODO: remove the slice.
-    const plan = planner.getBestRoute(cart, jobs, time);
+    const plan = planner.getBestRoute(cart, jobs, startTime);
 
     console.log('#########################')
     console.log('Route planning Complete');
     console.log('');
 
     if (plan) {
-        planner.explainRoute(plan, time, logger);
+        planner.explainRoute(plan, startTime, logger);
     }
     else {
         console.log('No route found.')
