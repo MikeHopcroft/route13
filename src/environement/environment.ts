@@ -73,7 +73,8 @@ export class Environment {
         this.successfulJobs = [];
         this.failedJobs = [];
 
-        const maxJobs = 2;
+        // TODO: This maxJobs cannot be less than the one used by JobAssigner.
+        const maxJobs = 3;
         this.routePlanner = new RoutePlanner(
             maxJobs,
             this.loadTimeEstimator,

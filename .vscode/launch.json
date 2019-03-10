@@ -15,6 +15,13 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "Full Route13",
+            "program": "${workspaceFolder}/build/samples/full-route13.js",
+            "args": [ "--colors" ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "junk",
             "program": "${workspaceFolder}/build/samples/junk.js",
             "args": [ "--colors" ]

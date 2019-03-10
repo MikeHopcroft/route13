@@ -31,8 +31,13 @@ export class Condition {
 
     // Wake up all waiting Agents.
     wakeAll() {
-        while (this.agents.length > 0) {
-            this.wakeOne();
+        const agents = this.agents;
+        this.agents = [];
+        this.pendingWakeups = 0;
+        for (const agent of agents) {
+            // WARNING: agent could call sleep from inside start().
+            // This is why we iterate over agents instead of this.agents.
+            start(agent);
         }
     }
 

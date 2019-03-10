@@ -1,4 +1,4 @@
-import { Agent, Clock, Condition, NextStep, SimTime } from '../core';
+import { Agent, Clock, Condition, NextStep, SimTime, MINUTE } from '../core';
 import { Cart, Environment, Job, Trace } from '../environement';
 import { merge, Planner } from '../planner';
 
@@ -21,7 +21,8 @@ export class PlanningLoopDispatcher implements Dispatcher {
 
     // TOOD: planningTime should be a parameter.
     // Or it could be provided by the Planner.
-    private readonly planningTime = 5000;
+    private readonly planningStartTime: number;
+    private readonly planningInterval: number;
 
     private shuttingDown: boolean;
     private readonly jobAvailableCondition: Condition;
@@ -30,10 +31,19 @@ export class PlanningLoopDispatcher implements Dispatcher {
     private currentPlanTime: SimTime;
     private newPlanAvailable: Condition;
 
-    constructor(clock: Clock, env: Environment, trace: Trace, planner: Planner | null) {
+    constructor(
+        clock: Clock,
+        env: Environment,
+        trace: Trace,
+        planningStartTime: SimTime,
+        planningInterval: SimTime,
+        planner: Planner | null
+    ) {
         this.clock = clock;
         this.env = env;
         this.trace = trace;
+        this.planningStartTime = planningStartTime;
+        this.planningInterval = planningInterval;
         this.planner = planner;
 
         this.shuttingDown = false;
@@ -63,7 +73,10 @@ export class PlanningLoopDispatcher implements Dispatcher {
     *waitForNextPlan(planTime: SimTime): IterableIterator<NextStep> {
         if (planTime >= this.currentPlanTime && !this.shuttingDown) {
             // If we already have the current plan, wait for a new one.
-            yield this.waitForPlan();
+            // yield this.waitForPlan();
+            yield (agent: Agent) => {
+                this.newPlanAvailable.sleep(agent);
+            }
         }
     }
 
@@ -100,6 +113,8 @@ export class PlanningLoopDispatcher implements Dispatcher {
         // Wait until it is time to introduce the Job.
         yield this.clock.until(time);
 
+        console.log(`Introduce Job ${job.id}`);
+
         // Add the job to the environment.
         this.env.addJob(job);
 
@@ -125,11 +140,12 @@ export class PlanningLoopDispatcher implements Dispatcher {
             // This snapshot will be passed to the planner.
             const carts = this.env.cartSnapshot();
             const jobs = this.env.jobSnapshot(carts);
-          
+
             // For now, just simulate time to plan.
             // In a real implementation, planning might happen out of process,
             // possibly on another server.
-            const planReadyTime = this.clock.time + this.planningTime;
+            let planReadyTime =
+                Math.max(this.planningStartTime, this.clock.time + this.planningInterval);
             yield this.clock.until(planReadyTime);
 
             // For now, run the planner in process.

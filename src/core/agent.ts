@@ -27,9 +27,11 @@ export type Agent = IterableIterator<NextStep>;
 
 // The start function wakes up an Agent and then runs its NextStep.
 export function start(agent: Agent) {
+    // console.log('start(agent)');
     const { done, value } = agent.next();
     const nextStep = value;
     if (!done) {
+        // console.log('  nextStep(agent)')
         nextStep(agent);
     }
 }

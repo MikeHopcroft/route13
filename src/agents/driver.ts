@@ -25,6 +25,7 @@ export class Driver {
         let currentPlanTime: SimTime = -Infinity;
         while (true) {
             // Wait for a new plan.
+            console.log(`cart ${cart.id} driver about to waitForNextPlan(${currentPlanTime})`);
             yield* this.dispatcher.waitForNextPlan(currentPlanTime);
 
             // If we're shutting down, break out of the loop.
@@ -35,6 +36,7 @@ export class Driver {
             // Begin executing the plan.
             currentPlanTime = this.clock.time;
             const jobs = this.dispatcher.getPlan(cart);
+            console.log(`Cart ${cart.id} is assigned [${jobs.map((x) => x.id).join(',')}]`);
             yield* this.findRouteAndGo(cart, currentPlanTime, jobs);
         }
     }
@@ -57,7 +59,10 @@ export class Driver {
             // PROBABLY NEED SOME REPLAN STRATEGY WITH FEWER JOBS.
             // MAY NEED SOME WAY TO DISPOSE OF JOBS THAT CAN NEVER BE COMPLETED.
             // TODO: Handle this case.
-            throw TypeError();
+            for (const job of jobs) {
+                this.env.failJob(job);
+            }
+//            throw TypeError();
         }
         else {
             // Execute planned route, one action at a time.

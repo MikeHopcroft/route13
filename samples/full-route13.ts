@@ -5,16 +5,17 @@ import {
     Driver,
     Environment,
     formatTimeHMS,
-    Job,
-    JobFactory,
+    HOUR,
     LocationId,
     MINUTE,
-    // PlanningLoopDispatcher,
+    PlanningLoopDispatcher,
     SECOND,
     SimTime,
     start,
     TextTrace,
-    time
+    time,
+    TransferGenerator,
+    JobAssigner
 } from '../src';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -40,7 +41,7 @@ function go() {
     // Trace output lines consist of the time, followed by a description of the
     // activity. For readability, lines associated with the same Cart have the
     // same color.
-    const trace = new TextTrace(clock, formatTimeHMS, console.log );
+    const trace = new TextTrace(clock, formatTimeHMS, console.log);
 
     // The Environment class holds the state of the world. This state includes
     //   1. estimator functions that model physical activities in the world,
@@ -59,9 +60,25 @@ function go() {
         trace
     );
 
+    const maxJobCount = 3;
+    const planner = new JobAssigner(
+        maxJobCount,
+        loadTimeEstimator,
+        unloadTimeEstimator,
+        transitTimeEstimator);
+
     // The Dispatcher class assigns Jobs to Drivers.
-    // const dispatcher = new PlanningLoopDispatcher(clock, environment, trace, null);
-    const dispatcher = new SimpleDispatcher(clock, environment, trace);
+    const planningStartTime = time(7, 45);  // 7:45
+    const planningInterval = time(0, 15);    // 0:05
+    const dispatcher = new PlanningLoopDispatcher(
+        clock,
+        environment,
+        trace,
+        planningStartTime,
+        planningInterval,
+        planner
+    );
+    // const dispatcher = new SimpleDispatcher(clock, environment, trace);
 
     // The Driver performs the sequence of Actions necessary to complete the
     // set of assigned Jobs.
@@ -82,26 +99,25 @@ function go() {
     //
     // Construct a list of jobs.
     //
-    const jobFactory = new JobFactory();
-    const jobs: Job[] = [
-        // Move 5 items from location 2 to 10 between the times 0:03 and 0:30.
-        jobFactory.transfer(5, 2, time(0,3), 10, time(0,30)),
+    const arrivalCount = 20;
+    const earliestArrivalTime = time(8, 0);      //  8:00
+    const latestArrivalTime = time(22, 59);     // 22:59
+    const turnAroundTime = 1 * HOUR;
+    const minConnectionTime = 30 * MINUTE;
+    const maxItemsPerTransfer = 5;
+    const transfers = new TransferGenerator(
+        arrivalCount,
+        earliestArrivalTime,
+        latestArrivalTime,
+        turnAroundTime,
+        minConnectionTime,
+        maxItemsPerTransfer
+    );
 
-        // Move 5 items from location 3 to 4 between the times 0:03 and 0:25.
-        jobFactory.transfer(6, 3, time(0,3), 4, time(0,25)),
-
-        // Go out of service at location 9 between the times 0:30 and 0:40.
-        jobFactory.outOfService(9, time(0,30), time(0,40)),
-
-        // Move 9 items from location 7 to 4 between the times 0:13 and 0:27.
-        jobFactory.transfer(9, 7, time(0,13), 4, time(0,27))
-    ];
-
-    // Starting at time zero, make the dispatcher aware of all of the Jobs on
-    // the list. In a real simulation, the jobs would likely trickle in,
-    // one-by-one, over a period of time.
-    const introduceAt: SimTime = 0;
-    for (const job of jobs) {
+    // Make the dispatcher aware of each of the Jobs on the list, 15 minutes in
+    // advance.
+    for (const job of transfers.jobs()) {
+        const introduceAt = Math.max(job.pickupAfter - 15 * MINUTE, 0);
         start(dispatcher.introduceJob(job, introduceAt));
     }
 
@@ -109,11 +125,15 @@ function go() {
     // This loop will run until the dispatcher is shut down.
     start(dispatcher.planningLoop());
 
-    // Shut down the dispatcher at 0:59.
-    start(dispatcher.shutdownAt(time(0, 59)));
+    // Shut down the dispatcher at 23:59.
+    start(dispatcher.shutdownAt(time(23, 59)));
 
     // Kick off the simulation.
     clock.mainloop();
+
+    console.log(`Scheduled: ${transfers.getJobCount()}`);
+    console.log(`Completed: ${environment.successfulJobs.length}`);
+    console.log(`Failed: ${environment.failedJobs.length}`);
 
     console.log('Simulation ended.');
 }
@@ -136,7 +156,7 @@ function go() {
 // NOTE: this function can be generated from a directed graph, using the
 // the Graph class in src/estimators.
 function transitTimeEstimator(origin: LocationId, destination: LocationId, startTime: SimTime): SimTime {
-    return Math.abs(destination - origin) * MINUTE;
+    return Math.abs(destination - origin) * MINUTE * 10;
 }
 
 // This function gives the next location along the path from the specified

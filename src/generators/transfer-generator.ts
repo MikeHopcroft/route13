@@ -200,27 +200,27 @@ export class TransferGenerator {
     }
 
     // Returns the number of berths allocated to handle the set of TurnArounds.
-    berthCount() {
+    berthCount(): number {
         return this.berths.length;
     }
 
     // Generator enumerates TransferJobs created during class construction.
-    jobs() {
+    jobs(): IterableIterator<TransferJob> {
         return this.transfers[Symbol.iterator]();
     }
 
     // Returns the number of TransferJobs created during construction.
-    getJobCount() {
+    getJobCount(): number {
         return this.transfers.length;
     }
 
     // Generator enumerates TurnArounds created during class construction.
-    getTurnArounds() {
+    getTurnArounds(): IterableIterator<TurnAround> {
         return this.turnArounds[Symbol.iterator]();
     }
 
     // Returns the number of TurnArounds created during construction.
-    getTurnAroundCount() {
+    getTurnAroundCount(): number {
         return this.turnArounds.length;
     }
 
@@ -283,7 +283,7 @@ export class TransferGenerator {
     }
 
     // Returns a Berth to the pool of unoccupied Berths.
-    private releaseBerth(berth: LocationId) {
+    private releaseBerth(berth: LocationId): void {
         this.berths.push(berth);
     }
 
@@ -339,7 +339,7 @@ export class TransferGenerator {
     }
 
     // Returns random integer in range [start, end).
-    private randomInRange(start:number, end:number) {
+    private randomInRange(start:number, end:number): number {
         if (end < start) {
             const message = "end must be less than start";
             throw TypeError(message);
@@ -348,7 +348,7 @@ export class TransferGenerator {
     }
 
     // Returns a random natural number not exceeding max.
-    private randomNaturalNumber(max: number) {
+    private randomNaturalNumber(max: number): number {
         if (max < 1) {
             const message = "max cannot be less than 1";
             throw TypeError(message);
