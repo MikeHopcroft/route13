@@ -1,15 +1,17 @@
-import { HOUR, MINUTE, SimTime, TransferGenerator } from '../src';
+import { HOUR, MINUTE, SimTime, time, TransferGenerator } from '../src';
 
 
 function go() {
     const arrivalCount = 20;
-    const latestArrivalTime = 8 * HOUR;
+    const earliestArrivalTime = time(8,0);      //  8:00
+    const latestArrivalTime =  time(22,59);     // 22:59
     const turnAroundTime = 1 * HOUR;
     const minConnectionTime = 30 * MINUTE;
     const maxItemsPerTransfer = 5;
 
     const generator = new TransferGenerator(
         arrivalCount,
+        earliestArrivalTime,
         latestArrivalTime,
         turnAroundTime,
         minConnectionTime,

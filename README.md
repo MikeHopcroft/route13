@@ -16,7 +16,7 @@ For information on how `Route13` works, please see our
 written in [TypeScript](https://www.typescriptlang.org/).
 In order to use `Route13` you must have
 [Node installed](https://nodejs.org/en/download/) on your machine.
-`Route13` has been tested with Node version 9.4.0.
+`Route13` has been tested with Node version 10.15.3.
 
 `Route13` is be available as an [npm package](https://www.npmjs.com/package/route13). To install `Route13`,
 

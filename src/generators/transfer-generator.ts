@@ -91,12 +91,15 @@ export class TransferGenerator {
     // accessor functions.
     //
     // Parameters
+    //
     // arrivalCount
     //    Number of random arrivals to construct.
     //
+    // earliestArrivalTime
+    //    Earliest time in scheduling window for random arrivals.
+    //
     // lastestArrivalTime
-    //    Random arrivals will be scheduleded between time 0 and the specified
-    //    time.
+    //    Time immediately after scheduling window for random arrivals.
     //
     // turnAroundTime
     //    The time between an arrival and its corresponding departure.
@@ -112,6 +115,7 @@ export class TransferGenerator {
     //    maxItemsPerTransfer.
     constructor(
         arrivalCount: number,
+        earliestArrivalTime: SimTime,
         latestArrivalTime: SimTime,
         turnAroundTime: SimTime,
         minConnectionTime: SimTime,
@@ -121,7 +125,7 @@ export class TransferGenerator {
         this.maxItemsPerTransfer = maxItemsPerTransfer;
         this.turnAroundTime = turnAroundTime;
 
-        this.distribution = new Gaussian(minConnectionTime * 1.5, minConnectionTime * minConnectionTime);
+        this.distribution = new Gaussian(minConnectionTime * 1.5, 25 * minConnectionTime * minConnectionTime);
         this.random = seedrandom('seed1');
         this.berthFactory = new IdFactory();
         this.journeyFactory = new IdFactory();
@@ -138,7 +142,7 @@ export class TransferGenerator {
 
         // Create random arrivals.
         for (let i = 0; i < arrivalCount; ++i) {
-            this.arrivals.push(this.randomArrival(latestArrivalTime));
+            this.arrivals.push(this.randomArrival(earliestArrivalTime, latestArrivalTime));
         }
 
         // Create turn-arounds that pair departures with each arrival.
@@ -260,17 +264,20 @@ export class TransferGenerator {
     // Allocates a randomly selected Berth if one is available. Otherwise
     // creates a new Berth.
     private allocateRandomBerth(): LocationId {
-        let berth = this.berths.pop();
-        if (berth === undefined) {
-            return this.berthFactory.id();
+        if (this.berths.length === 0) {
+            const berth = this.berthFactory.id();
+            return berth;
         }
-        else if (this,this.berths.length === 0) {
+        else if (this.berths.length === 1)
+        {
+            const berth = this.berths.pop() as LocationId;
             return berth;
         }
         else {
             const index = this.randomInRange(0, this.berths.length);
             const temp = this.berths[index];
-            this.berths[index] = berth;
+            this.berths[index] = this.berths[0];
+            this.berths.shift();
             return temp;
         }
     }
@@ -281,9 +288,12 @@ export class TransferGenerator {
     }
 
     // Creates a random arrival between time 0 and the latestArrivalTime.
-    private randomArrival(latestArrivalTime: SimTime): Arrival {
+    private randomArrival(
+        earliestArrivalTime: SimTime,
+        latestArrivalTime: SimTime
+    ): Arrival {
         const id = this.journeyFactory.id();
-        const time = this.randomInRange(0, latestArrivalTime);
+        const time = this.randomInRange(earliestArrivalTime, latestArrivalTime);
         return { id, time };
     }
 
