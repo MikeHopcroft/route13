@@ -35,7 +35,6 @@ export class Environment {
     // Job related
     //
     jobs: Map<JobId, Job>;
-    unassignedJobs: Job[];
 
     successfulJobs: Job[];
     failedJobs: Job[];
@@ -70,7 +69,6 @@ export class Environment {
         this.fleet = new Map<CartId, Cart>();
 
         this.jobs = new Map<JobId, Job>();
-        this.unassignedJobs = [];
 
         this.successfulJobs = [];
         this.failedJobs = [];
@@ -138,11 +136,6 @@ export class Environment {
     // has been merged.
     addJob(job: Job) {
         this.jobs.set(job.id, job);
-
-        // TODO: BUG: The following ling does not update a job. It just adds
-        // another copy. Leaving this in as it is temporary code. Eventually
-        // all job dispatch will be based on this.jobs.
-        this.unassignedJobs.push(job);
     }
 
     // Marks a job as being assigned to a Cart and adds the job to the set

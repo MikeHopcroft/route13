@@ -1,7 +1,7 @@
 import {
     CartFactory,
     Clock,
-    Dispatcher,
+    SimpleDispatcher,
     Driver,
     Environment,
     formatTimeHMS,
@@ -9,6 +9,7 @@ import {
     JobFactory,
     LocationId,
     MINUTE,
+    // PlanningLoopDispatcher,
     SECOND,
     SimTime,
     start,
@@ -59,7 +60,8 @@ function go() {
     );
 
     // The Dispatcher class assigns Jobs to Drivers.
-    const dispatcher = new Dispatcher(clock, environment, trace, null);
+    // const dispatcher = new PlanningLoopDispatcher(clock, environment, trace, null);
+    const dispatcher = new SimpleDispatcher(clock, environment, trace);
 
     // The Driver performs the sequence of Actions necessary to complete the
     // set of assigned Jobs.
@@ -107,9 +109,8 @@ function go() {
     // This loop will run until the dispatcher is shut down.
     start(dispatcher.planningLoop());
 
-    // Shut down the dispatcher at 16000.
-    start(dispatcher.shutdownAt(16000));
-
+    // Shut down the dispatcher at 0:59.
+    start(dispatcher.shutdownAt(time(0, 59)));
 
     // Kick off the simulation.
     clock.mainloop();

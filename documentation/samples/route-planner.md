@@ -130,7 +130,7 @@ SUSPEND at location 9 before 1800000 until 2400000 (job 2)
     2400000: completed
 ~~~
 
-The best route
+Here's the best route
 * picks up 5 items for job 0 at location 2
 * picks up 4 items for job 1 at location 3
 * drops off those 4 items at loctation 4

@@ -24,7 +24,7 @@ import { Assignment } from '../planner';
 // assignment
 //   Provides a mapping from each Cart to the list of Jobs it should perform.
 //
-export function merge2(
+export function merge(
     carts: Map<CartId, Cart>,
     jobs: Map<JobId, Job>,
     plan: Map<Cart, Assignment>

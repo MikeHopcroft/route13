@@ -148,7 +148,7 @@ export class TextTrace implements Trace {
     }
 
     jobAssigned(job: Job): void {
-        this.format(job.assignedTo, `Job ${job.id} assigned to cart ${(job.assignedTo as Cart).id}.`);
+        this.format(job.assignedTo, `Cart ${(job.assignedTo as Cart).id} commits to Job ${job.id}.`);
     }
 
     jobSucceeded(job: Job): void {

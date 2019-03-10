@@ -3,6 +3,7 @@
 This is a very rough `TODO` list that captures issues encountered
 while coding during the early stages when the codebase is too fluid to benefit from a formal issue tracking system. This list will be cleaned up over time and eventually migrated to GitHub issues.
 
+* Consider renaming Job.assignedTo to Job.committed
 * Format all time values in logs and other output.
 * Document the interpretation of time as milliseconds.
 * ~~Rename `Plan` to `Route`.~~

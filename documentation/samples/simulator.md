@@ -25,23 +25,22 @@ Here's the trace output from the simulation:
 ~~~
 % node build/samples/simulator-demo.js
 
-00:00:00 Job 0 assigned to cart 0.
 00:00:00 Cart 0 departs location 0 for location 2.
-00:00:00 Job 1 assigned to cart 1.
 00:00:00 Cart 1 departs location 0 for location 3.
-00:00:00 Job 3 assigned to cart 2.
 00:00:00 Cart 2 departs location 0 for location 7.
+00:01:00 Cart 2 passes location 1.
 00:01:00 Cart 0 passes location 1.
 00:01:00 Cart 1 passes location 1.
-00:01:00 Cart 2 passes location 1.
-00:02:00 Cart 1 passes location 2.
-00:02:00 Cart 2 passes location 2.
 00:02:00 Cart 0 arrives at location 2.
 00:02:00 Cart 0 waits until 00:03:00.
-00:03:00 Cart 2 passes location 3.
-00:03:00 Cart 0 begins loading 5 items.
+00:02:00 Cart 1 passes location 2.
+00:02:00 Cart 2 passes location 2.
 00:03:00 Cart 1 arrives at location 3.
+00:03:00 Cart 1 commits to Job 1.
 00:03:00 Cart 1 begins loading 6 items.
+00:03:00 Cart 2 passes location 3.
+00:03:00 Cart 0 commits to Job 0.
+00:03:00 Cart 0 begins loading 5 items.
 00:04:00 Cart 2 passes location 4.
 00:05:00 Cart 2 passes location 5.
 00:05:30 Cart 0 finishes loading (payload=5).
@@ -57,7 +56,6 @@ Here's the trace output from the simulation:
 00:07:30 Cart 0 passes location 4.
 00:08:00 Cart 1 finishes unloading (payload=0).
 00:08:00 Job 1 succeeded.
-00:08:00 Job 2 assigned to cart 1.
 00:08:00 Cart 1 departs location 4 for location 9.
 00:08:30 Cart 0 passes location 5.
 00:09:00 Cart 1 passes location 5.
@@ -71,6 +69,7 @@ Here's the trace output from the simulation:
 00:13:00 Cart 1 arrives at location 9.
 00:13:00 Cart 1 suspends service at location 9.
 00:13:00 Cart 1 waits until 00:40:00.
+00:13:00 Cart 2 commits to Job 3.
 00:13:00 Cart 2 begins loading 9 items.
 00:13:30 Cart 0 arrives at location 10.
 00:13:30 Cart 0 begins unloading 5 items.

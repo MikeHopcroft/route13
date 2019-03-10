@@ -20,66 +20,22 @@ export class Driver {
     }
 
     // Agent that continuosly operates a single cart.
-    // Current implementation processes one job at a time.
-    // When finished, grabs next unassigned Job from the Dispatcher.
-    *drive(cart: Cart): Agent {
-        while (true) {
-            // Wait for a job to become available.
-            yield this.dispatcher.waitForJob();
-
-            // let job = null;
-            // for (const j of this.env.jobs.values()) {
-            //     if (!j.assignedTo) {
-            //         job = j;
-            //         break;
-            //     }
-            // }
-
-            // if (job) {
-            {
-                // Select a job, FIFO order.
-                const job = this.env.unassignedJobs.shift() as Job;
-                this.env.assignJob(job, cart);
-
-                // Convert job to a plan.
-                const plan = this.env.routePlanner.getBestRoute(cart, [job], this.clock.time);
-
-                // Execute plan.
-                if (plan) {
-                    yield* this.performActionSequence(cart, plan.actions);
-                }
-                else {
-                    // There is no plan for this cart to complete this job.
-                    this.env.failJob(job);
-                }
-            }
-        }
-    }
-
-    // Agent that continuosly operates a single cart.
     // This implementation takes new job assignments from the planning cycle.
-    *drive2(cart: Cart): Agent {
+    *drive(cart: Cart): Agent {
         let currentPlanTime: SimTime = -Infinity;
         while (true) {
             // Wait for a new plan.
-            yield *this.dispatcher.waitForNextPlan(currentPlanTime);
+            yield* this.dispatcher.waitForNextPlan(currentPlanTime);
 
             // If we're shutting down, break out of the loop.
-            if (this.dispatcher.shuttingDown) {
+            if (this.dispatcher.isShuttingDown()) {
                 break;
             }
-
-            const jobs = this.dispatcher.currentPlan.get(cart);
-            if (!jobs) {
-                // There is no plan for this cart.
-                // This seems like a bug, vs an empty plan.
-                // TODO: Log or throw?
-                throw TypeError();
-            }
-            else {
-                // Begin executing the plan.
-                yield* this.findRouteAndGo(cart, currentPlanTime, jobs);
-            }
+          
+            // Begin executing the plan.
+            currentPlanTime = this.clock.time;
+            const jobs = this.dispatcher.getPlan(cart);
+            yield* this.findRouteAndGo(cart, currentPlanTime, jobs);
         }
     }
 
@@ -89,25 +45,31 @@ export class Driver {
 
         if (!route) {
             // No route was found for this cart to complete this job.
-            // THIS SHOULD NEVER HAPPEN, IF PLANNER PLANS FOR CORRECT TIME.
-            // SOME RACE CONDITIONS MIGHT ALLOW THIS.
-            //   start driving
-            //   planner finishes
-            //   much later finish driving
-            //   now it's too late for plan to work
+            //
+            // This could happen if the cart performs a long-running action
+            // that makes it impossible to complete all of the newly assigned
+            // jobs.
+            //
+            // In general, the planner should be aware of the cart's current
+            // action but unexpected conditions (e.g. weather, mechanical
+            // issues, etc.) could invalidate the plan.
+
             // PROBABLY NEED SOME REPLAN STRATEGY WITH FEWER JOBS.
-            // TODO: Handlr this case.
+            // MAY NEED SOME WAY TO DISPOSE OF JOBS THAT CAN NEVER BE COMPLETED.
+            // TODO: Handle this case.
             throw TypeError();
-            // this.env.failJob(job);
         }
         else {
             // Execute planned route, one action at a time.
             for (const action of route.actions) {
-                if (currentPlanTime < this.dispatcher.currentPlanTime) {
+                if (this.dispatcher.newerPlanAvailable(currentPlanTime)) {
+                // if (currentPlanTime < this.dispatcher.getCurrentPlanTime()) {
                     // There's a new plan available. Break out of the loop to
                     // allow caller to merge in new plan.
                     break;
                 }
+                // TODO: Do we want to check whether unexpected delays have
+                // rendered the plan obsolete?
                 yield* this.performOneAction(cart, action);
             }
         }
@@ -149,7 +111,8 @@ export class Driver {
         // Once we've finished waiting and started loading, we must claim this
         // job so it cannot be assigned to any other card.
         action.job.state = TransferJobState.ENROUTE;
-        action.job.assignedTo = cart;
+        this.env.assignJob(action.job, cart);
+        // action.job.assignedTo = cart;
 
         yield* this.load(cart, action.quantity);
     }
