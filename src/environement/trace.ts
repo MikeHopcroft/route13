@@ -119,19 +119,20 @@ export class TextTrace implements Trace {
     }
 
     cartBeginsLoading(cart: Cart, quantity: number): void {
-        this.format(cart, `Cart ${cart.id} begins loading ${quantity} items.`);
+        // this.format(cart, `Cart ${cart.id} begins loading ${quantity} items.`);
+        this.format(cart, `Cart ${cart.id} begins loading ${quantity} items. payload=${cart.payload}`);
     }
 
     cartFinishesLoading(cart: Cart): void {
-        this.format(cart, `Cart ${cart.id} finishes loading (payload=${cart.payload}).`);
+        this.format(cart, `Cart ${cart.id} finishes loading (payload=${cart.payload}).  payload=${cart.payload}`);
     }
 
     cartBeginsUnloading(cart: Cart, quantity: number): void {
-        this.format(cart, `Cart ${cart.id} begins unloading ${quantity} items.`);
+        this.format(cart, `Cart ${cart.id} begins unloading ${quantity} items. payload=${cart.payload}`);
     }
 
     cartFinishesUnloading(cart: Cart): void {
-        this.format(cart, `Cart ${cart.id} finishes unloading (payload=${cart.payload}).`);
+        this.format(cart, `Cart ${cart.id} finishes unloading (payload=${cart.payload}). payload=${cart.payload}`);
     }
 
     cartSuspendsService(cart: Cart): void {

@@ -19,6 +19,10 @@ export class JobAssigner implements Planner {
     private readonly maxJobCount: number;
     private readonly routePlanner: RoutePlanner;
 
+    loadTimeEstimator: LoadTimeEstimator;
+    unloadTimeEstimator: UnloadTimeEstimator;
+    transitTimeEstimator: TransitTimeEstimator;
+
     constructor(
         maxJobCount: number,
         loadTimeEstimator: LoadTimeEstimator,
@@ -32,6 +36,10 @@ export class JobAssigner implements Planner {
             unloadTimeEstimator,
             transitTimeEstimator
         );
+
+        this.loadTimeEstimator = loadTimeEstimator;
+        this.unloadTimeEstimator = unloadTimeEstimator;
+        this.transitTimeEstimator = transitTimeEstimator;
     }
 
     createAssignment(
@@ -58,7 +66,7 @@ export class JobAssigner implements Planner {
                 cartJobs.push(job);
             }
             else {
-                // This job is no assigned.
+                // This job is not assigned.
                 unassigned.push(job);
             }
         }
@@ -68,16 +76,27 @@ export class JobAssigner implements Planner {
         // Then score each pairing.
         const alternatives: Assignment[] = [];
         for (const [cart, assigned] of existingAssignments) {
-            for (let jobCount = 1; jobCount <= this.maxJobCount; ++jobCount) {
-                const newJobCount = Math.max(jobCount - assigned.length, 0);
-                if (newJobCount > 0) {
-                    // TODO: loop from 0..newJobs?
+            if (assigned.length >= this.maxJobCount) {
+                // The esisting assignment is the only possible plan for this cart.
+                // Set score to Infinity.
+                alternatives.push({
+                    cart,
+                    jobs: assigned,
+                    score: Infinity
+                });
+            }
+            else {
+                const maxNewJobs = this.maxJobCount - assigned.length;
+                for (let jobCount = 0; jobCount <= maxNewJobs; ++jobCount) {
                     // Issue: what if [ShortJob] is always a better score than [ShortJob, LongJob],
                     // even though LongJob will have to be done eventually?
                     // Perhaps we want to enumerate and select all 3-tuples and then
                     // only look at 2-tuples if there were some carts unassigned?
-                    for (const combination of combinations(newJobCount, unassigned.length)) {
+                    for (const combination of combinations(jobCount, unassigned.length)) {
                         const slate = [...assigned, ...(combination.map((n) => unassigned[n]))];
+                        if (slate.length > 3) {
+                            console.log(`slate has length of ${slate.length}`);
+                        }
                         const plan = this.routePlanner.getBestRoute(cart, slate, time);
                         if (plan) {
                             alternatives.push({
@@ -87,20 +106,55 @@ export class JobAssigner implements Planner {
                             })
                         }
                         else {
+                            // console.log('+++++++++++++++++++++++++++');
                             console.log(`REJECTED: [${slate.map((x)=>x.id).join(",")}]`);
+                            // const router = new RoutePlanner(3, this.loadTimeEstimator, this.unloadTimeEstimator, this.transitTimeEstimator, console.log);
+                            // router.getBestRoute(cart, slate, time);
+                            // console.log('---------------------------');
                         }
                     }   
                 }
-                else {
-                    // The esisting assignment is the only possible plan for this cart.
-                    // Set score to Infinity.
-                    alternatives.push({
-                        cart,
-                        jobs: assigned,
-                        score: Infinity
-                    })
-                }    
             }
+            // for (let jobCount = 1; jobCount <= this.maxJobCount; ++jobCount) {
+            //     const newJobCount = Math.max(jobCount - assigned.length, 0);
+            //     if (newJobCount > 0) {
+            //         // TODO: loop from 0..newJobs?
+            //         // // Issue: what if [ShortJob] is always a better score than [ShortJob, LongJob],
+            //         // // even though LongJob will have to be done eventually?
+            //         // // Perhaps we want to enumerate and select all 3-tuples and then
+            //         // // only look at 2-tuples if there were some carts unassigned?
+            //         // for (const combination of combinations(newJobCount, unassigned.length)) {
+            //         //     const slate = [...assigned, ...(combination.map((n) => unassigned[n]))];
+            //         //     if (slate.length > 3) {
+            //         //         console.log(`slate has length of ${slate.length}`);
+            //         //     }
+            //         //     const plan = this.routePlanner.getBestRoute(cart, slate, time);
+            //         //     if (plan) {
+            //         //         alternatives.push({
+            //         //             cart,
+            //         //             jobs: slate,
+            //         //             score: plan.workingTime
+            //         //         })
+            //         //     }
+            //         //     else {
+            //         //         console.log('+++++++++++++++++++++++++++');
+            //         //         console.log(`REJECTED: [${slate.map((x)=>x.id).join(",")}]`);
+            //         //         const router = new RoutePlanner(3, this.loadTimeEstimator, this.unloadTimeEstimator, this.transitTimeEstimator, console.log);
+            //         //         router.getBestRoute(cart, slate, time);
+            //         //         console.log('---------------------------');
+            //         //     }
+            //         // }   
+            //     }
+            //     else {
+            //         // // The esisting assignment is the only possible plan for this cart.
+            //         // // Set score to Infinity.
+            //         // alternatives.push({
+            //         //     cart,
+            //         //     jobs: assigned,
+            //         //     score: Infinity
+            //         // })
+            //     }    
+            // }
         }
 
         // Now we have all of the possible assignments.

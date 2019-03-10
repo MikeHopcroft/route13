@@ -125,7 +125,7 @@ export class RoutePlanner {
     //   effects like rush hour conjestion.
     //
     // Returns the Route with the shortest working time that satisfies the
-    // constraints. Workiong time is defined as time that the cart is moving
+    // constraints. Working time is defined as time that the cart is moving
     // between locations, waiting to load, loading, and unloading. It does
     // not include time when the cart is out of service.
     //
@@ -143,6 +143,13 @@ export class RoutePlanner {
                 this.logger('')
                 this.explainRoute(route, time, this.logger);
                 this.logger('')
+            }
+
+            if (route.actions.length === 0) {
+                console.log('zero-length route');
+                for (const route of this.validRoutesFromJobs(cart, jobs, time)) {
+                    console.log(`  Route`);
+                }
             }
 
             if (route.workingTime < workingTime) {
@@ -270,11 +277,16 @@ export class RoutePlanner {
                 }
 
                 if (state.payload < 0) {
-                    // TODO: for resiliance, perhaps this should log and return
-                    // false instead of throwing?
-                    // This should never happen. Log and throw.
-                    const message = `Bug: cart has negative payload.`;
-                    throw TypeError(message);
+                    // This Route is invalid because it leaves a negative payload.
+                    if (logger) {
+                        logger(`    ${state.time}: CONTRAINT VIOLATED - negative payload ${action.time}`);
+                    }
+                    return false;
+                    // // TODO: for resiliance, perhaps this should log and return
+                    // // false instead of throwing?
+                    // // This should never happen. Log and throw.
+                    // const message = `Bug: cart has negative payload.`;
+                    // throw TypeError(message);
                 }
 
                 state.workingTime += (state.time - startTime);
@@ -431,10 +443,10 @@ export class RoutePlanner {
                             quantity: job.quantity
                         } as PickupAction);
                     }
-                    else {
-                        // We've already picked up, so first Action slot is null.
-                        actions.push(null);
-                    }
+                    // else {
+                    //     // We've already picked up, so first Action slot is null.
+                    //     actions.push(null);
+                    // }
 
                     actions.push({
                         job,
@@ -444,6 +456,10 @@ export class RoutePlanner {
                         quantity: job.quantity
                     } as DropoffAction);
 
+                    if (job.state !== TransferJobState.BEFORE_PICKUP) {
+                        actions.push(null);
+                    }
+                    
                     break;
 
                 default:

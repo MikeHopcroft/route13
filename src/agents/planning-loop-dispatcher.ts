@@ -1,5 +1,5 @@
-import { Agent, Clock, Condition, NextStep, SimTime, MINUTE } from '../core';
-import { Cart, Environment, Job, Trace } from '../environement';
+import { Agent, Clock, Condition, NextStep, SimTime } from '../core';
+import { Cart, Environment, Job, JobId, Trace } from '../environement';
 import { merge, Planner } from '../planner';
 
 import { Dispatcher } from './dispatcher';
@@ -80,12 +80,29 @@ export class PlanningLoopDispatcher implements Dispatcher {
         }
     }
 
-    getPlan(cart: Cart): Job[] {
-        const jobs = this.currentPlan.get(cart);
-        if (!jobs) {
+    getPlan(cart: Cart, jobs: Map<JobId, Job>): Job[] {
+        // Get the planned set of jobs for this cart.
+        const unfiltered = this.currentPlan.get(cart);
+        if (!unfiltered) {
             throw TypeError(`Unknown cart ${cart.id}.`);
         }
-        return jobs;
+
+        // Filter out those jobs that have been completed or are currently
+        // assigned to another cart.
+        const filtered = [];
+        for (const job of unfiltered) {
+            if (jobs.get(job.id) !== undefined) {
+                // This job is still active.
+                if (job.assignedTo === null || job.assignedTo === cart) {
+                    // This job is not assigned to another Cart.
+                    filtered.push(job);
+                }
+                else {
+                    console.log(`Cart ${cart.id} filtered Job ${job.id} which was assigned to Cart ${job.assignedTo.id}`);
+                }
+            }
+        }
+        return filtered;
     }
 
     getCurrentPlanTime() {
@@ -158,6 +175,12 @@ export class PlanningLoopDispatcher implements Dispatcher {
             this.currentPlanTime = this.clock.time;
 
             this.trace.plannerFinished();
+
+            console.log("New plan:")
+            for (const [cart, jobs] of this.currentPlan) {
+                console.log(`  Cart ${cart.id}: [${jobs.map((x) => x.id).join(",")}]`);
+            }
+            console.log('');
 
             // Notify all waiting drivers that a new plan is ready.
             this.newPlanAvailable.wakeAll();
