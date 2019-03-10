@@ -23,7 +23,7 @@ Each status line starts with the simulator time, followed by a brief activity de
 Here's the trace output from the simulation:
 
 ~~~
-% node build/samples/simulator-demo.js
+% node build/samples/hello-route13.js
 
 00:00:00 Cart 0 departs location 0 for location 2.
 00:00:00 Cart 1 departs location 0 for location 3.

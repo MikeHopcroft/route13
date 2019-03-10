@@ -8,6 +8,13 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "Hello Route13",
+            "program": "${workspaceFolder}/build/samples/hello-route13.js",
+            "args": [ "--colors" ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "junk",
             "program": "${workspaceFolder}/build/samples/junk.js",
             "args": [ "--colors" ]
@@ -24,13 +31,6 @@
             "request": "launch",
             "name": "Graph demo",
             "program": "${workspaceFolder}/build/samples/graph-demo.js",
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Simulator demo",
-            "program": "${workspaceFolder}/build/samples/simulator-demo.js",
-            "args": [ "--colors" ]
         },
         {
             "type": "node",
