@@ -14,6 +14,8 @@ import { Cart, Job, LocationId } from '../environement';
 ///////////////////////////////////////////////////////////////////////////////
 
 export interface Trace {
+    cartPlanIs(cart: Cart, jobs: Job[]): void;
+
     cartArrives(cart: Cart): void;
     cartPasses(cart: Cart): void;
     cartDeparts(cart: Cart, destination: LocationId): void;
@@ -100,6 +102,10 @@ export class TextTrace implements Trace {
 
     private color(cart: Cart, text: string): string {
         return this.colors[cart.id % this.colors.length](text);
+    }
+
+    cartPlanIs(cart: Cart, jobs: Job[]) {
+        this.format(cart, `Cart ${cart.id} plan is now [${jobs.map((x) => x.id).join(",")}].`);
     }
 
     cartDeparts(cart: Cart, destination: LocationId): void {

@@ -36,7 +36,9 @@ export class Driver {
             // Begin executing the plan.
             currentPlanTime = this.clock.time;
             const jobs = this.dispatcher.getPlan(cart, this.env.jobs);
-            console.log(`Cart ${cart.id} is assigned [${jobs.map((x) => x.id).join(',')}]`);
+            if (this.trace) {
+                this.trace.cartPlanIs(cart, jobs);
+            }
             if (jobs.length > 0) {
                 yield* this.findRouteAndGo(cart, currentPlanTime, jobs);
             }
