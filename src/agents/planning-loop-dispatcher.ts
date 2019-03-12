@@ -64,16 +64,9 @@ export class PlanningLoopDispatcher implements Dispatcher {
         }
     }
 
-    private waitForPlan(): NextStep {
-        return (agent: Agent) => {
-            this.newPlanAvailable.sleep(agent);
-        }
-    }
-
-    *waitForNextPlan(planTime: SimTime): IterableIterator<NextStep> {
+    *waitForNextPlan(planTime: SimTime): Agent {
         if (planTime >= this.currentPlanTime && !this.shuttingDown) {
             // If we already have the current plan, wait for a new one.
-            // yield this.waitForPlan();
             yield (agent: Agent) => {
                 this.newPlanAvailable.sleep(agent);
             }
@@ -140,7 +133,7 @@ export class PlanningLoopDispatcher implements Dispatcher {
     }
 
     // Agent the runs main planning loop.
-    *planningLoop() {
+    *planningLoop(): Agent {
         if (this.planner) {
             while (!this.shuttingDown) {
                 yield* this.updateJobAssignments();
@@ -149,7 +142,7 @@ export class PlanningLoopDispatcher implements Dispatcher {
     }
 
     // Agent that runs the planner once and updates job assignments.
-    private *updateJobAssignments() {
+    private *updateJobAssignments(): Agent {
         if (!this.shuttingDown) {
             this.trace.plannerStarted();
 
@@ -188,7 +181,7 @@ export class PlanningLoopDispatcher implements Dispatcher {
     }
 
     // Agent that shuts down the planning loop at a specified time.
-    *shutdownAt(time: SimTime) {
+    *shutdownAt(time: SimTime): Agent {
         yield this.clock.until(time);
         this.shuttingDown = true;
     }

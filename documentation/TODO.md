@@ -1,8 +1,12 @@
 # TODO List
 
 This is a very rough `TODO` list that captures issues encountered
-while coding during the early stages when the codebase is too fluid to benefit from a formal issue tracking system. This list will be cleaned up over time and eventually migrated to GitHub issues.
+while coding during the early stages when the codebase is too fluid
+to benefit from a formal issue tracking system.
+This list will be cleaned up over time and eventually migrated to GitHub issues.
 
+
+* Introduce staffing in `full-route13`
 * ~~Trace for introducing jobs~~
 * ~~Remove "Searched 42 assignments" plus extra blank lines~~
 * ~~Figure out how to trace the "New Plan:"~~

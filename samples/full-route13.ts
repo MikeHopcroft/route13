@@ -1,7 +1,9 @@
+import * as minimist from 'minimist';
+
 import {
     CartFactory,
     Clock,
-    SimpleDispatcher,
+    Dispatcher,
     Driver,
     Environment,
     formatTimeHMS,
@@ -10,6 +12,7 @@ import {
     MINUTE,
     PlanningLoopDispatcher,
     SECOND,
+    SimpleDispatcher,
     SimTime,
     start,
     TextTrace,
@@ -34,6 +37,8 @@ import {
 //
 ///////////////////////////////////////////////////////////////////////////////
 function go() {
+    const args = minimist(process.argv.slice(2));
+
     // The Clock class generates the events that drive the simulation.
     const clock = new Clock();
 
@@ -70,15 +75,22 @@ function go() {
     // The Dispatcher class assigns Jobs to Drivers.
     const planningStartTime = time(7, 45);  // 7:45
     const planningInterval = time(0, 15);    // 0:05
-    const dispatcher2 = new PlanningLoopDispatcher(
-        clock,
-        environment,
-        trace,
-        planningStartTime,
-        planningInterval,
-        planner
-    );
-    const dispatcher = new SimpleDispatcher(clock, environment, trace);
+
+    let dispatcher: Dispatcher;
+
+    if (args['simple']) {
+        dispatcher = new SimpleDispatcher(clock, environment, trace);
+    }
+    else {
+        dispatcher = new PlanningLoopDispatcher(
+            clock,
+            environment,
+            trace,
+            planningStartTime,
+            planningInterval,
+            planner
+        );   
+    }
 
     // The Driver performs the sequence of Actions necessary to complete the
     // set of assigned Jobs.

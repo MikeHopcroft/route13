@@ -26,6 +26,7 @@
   "devDependencies": {
     "@types/chai": "^4.1.6",
     "@types/debug": "0.0.31",
+    "@types/minimist": "^1.2.0",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.11.4",
     "@types/seedrandom": "^2.4.27",
@@ -39,6 +40,7 @@
     "chalk": "^2.4.2",
     "debug": "^4.1.0",
     "fastpriorityqueue": "^0.6.1",
+    "minimist": "^1.2.0",
     "seedrandom": "^2.4.4",
     "ts-gaussian": "^1.2.0"
   }

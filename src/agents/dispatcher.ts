@@ -21,7 +21,7 @@ export interface Dispatcher {
     introduceJob(job: Job, time: SimTime): Agent;
 
     // Starts the planning loop.
-    planningLoop(planningStartTime: SimTime, planningInterval: SimTime): Agent;
+    planningLoop(): Agent;
     
     // Shuts down the planning loop at a specified time.
     shutdownAt(time: SimTime): Agent;

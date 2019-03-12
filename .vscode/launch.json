@@ -17,7 +17,7 @@
             "request": "launch",
             "name": "Full Route13",
             "program": "${workspaceFolder}/build/samples/full-route13.js",
-            "args": [ "--colors" ]
+            "args": [ "--colors", "--simple" ]
         },
         {
             "type": "node",
