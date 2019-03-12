@@ -94,14 +94,16 @@ export class PlanningLoopDispatcher implements Dispatcher {
             if (jobs.get(job.id) !== undefined) {
                 // This job is still active.
                 if (job.assignedTo === null || job.assignedTo === cart) {
-                    // This job is not assigned to another Cart.
+                    // This job is not currently assigned to another Cart.
                     filtered.push(job);
-                }
-                else {
-                    console.log(`Cart ${cart.id} filtered Job ${job.id} which was assigned to Cart ${job.assignedTo.id}`);
                 }
             }
         }
+
+        if (this.trace) {
+            this.trace.cartPlanIs(cart, unfiltered, filtered);
+        }
+
         return filtered;
     }
 
@@ -129,8 +131,6 @@ export class PlanningLoopDispatcher implements Dispatcher {
 
         // Wait until it is time to introduce the Job.
         yield this.clock.until(time);
-
-        console.log(`Introduce Job ${job.id}`);
 
         // Add the job to the environment.
         this.env.addJob(job);
@@ -176,11 +176,11 @@ export class PlanningLoopDispatcher implements Dispatcher {
 
             this.trace.plannerFinished();
 
-            console.log("New plan:")
-            for (const [cart, jobs] of this.currentPlan) {
-                console.log(`  Cart ${cart.id}: [${jobs.map((x) => x.id).join(",")}]`);
-            }
-            console.log('');
+            // console.log("New plan:")
+            // for (const [cart, jobs] of this.currentPlan) {
+            //     console.log(`  Cart ${cart.id}: [${jobs.map((x) => x.id).join(",")}]`);
+            // }
+            // console.log('');
 
             // Notify all waiting drivers that a new plan is ready.
             this.newPlanAvailable.wakeAll();

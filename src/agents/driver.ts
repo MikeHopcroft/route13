@@ -25,7 +25,6 @@ export class Driver {
         let currentPlanTime: SimTime = -Infinity;
         while (true) {
             // Wait for a new plan.
-            // console.log(`cart ${cart.id} driver about to waitForNextPlan(${currentPlanTime})`);
             yield* this.dispatcher.waitForNextPlan(currentPlanTime);
 
             // If we're shutting down, break out of the loop.
@@ -36,9 +35,6 @@ export class Driver {
             // Begin executing the plan.
             currentPlanTime = this.clock.time;
             const jobs = this.dispatcher.getPlan(cart, this.env.jobs);
-            if (this.trace) {
-                this.trace.cartPlanIs(cart, jobs);
-            }
             if (jobs.length > 0) {
                 yield* this.findRouteAndGo(cart, currentPlanTime, jobs);
             }

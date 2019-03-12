@@ -70,7 +70,7 @@ function go() {
     // The Dispatcher class assigns Jobs to Drivers.
     const planningStartTime = time(7, 45);  // 7:45
     const planningInterval = time(0, 15);    // 0:05
-    const dispatcher = new PlanningLoopDispatcher(
+    const dispatcher2 = new PlanningLoopDispatcher(
         clock,
         environment,
         trace,
@@ -78,7 +78,7 @@ function go() {
         planningInterval,
         planner
     );
-    // const dispatcher = new SimpleDispatcher(clock, environment, trace);
+    const dispatcher = new SimpleDispatcher(clock, environment, trace);
 
     // The Driver performs the sequence of Actions necessary to complete the
     // set of assigned Jobs.
@@ -100,7 +100,7 @@ function go() {
     // Construct a list of jobs.
     //
     const arrivalCount = 20;
-    const earliestArrivalTime = time(8, 0);      //  8:00
+    const earliestArrivalTime = time(8, 0);     //  8:00
     const latestArrivalTime = time(22, 59);     // 22:59
     const turnAroundTime = 1 * HOUR;
     const minConnectionTime = 30 * MINUTE;
@@ -113,6 +113,25 @@ function go() {
         minConnectionTime,
         maxItemsPerTransfer
     );
+
+    // Print out list of jobs
+    let lastBerth = undefined;
+    for (const turnAround of transfers.getTurnArounds()) {
+        const arrival = turnAround.arrival;
+        if (arrival.location !== lastBerth) {
+            console.log('');
+            console.log(`Berth ${arrival.location}`);
+            lastBerth = arrival.location;
+        }
+        const departure = turnAround.departure;
+        console.log(`  Inbound #${arrival.id} at ${formatTime(arrival.time)} => Outbound #${departure.id} at ${formatTime(departure.time)}`)
+        for (const job of turnAround.jobs) {
+            const transferTime = job.dropoffBefore - job.pickupAfter;
+            console.log(`    Job ${job.id}: move ${job.quantity} items from ${job.pickupLocation} to ${job.dropoffLocation} between ${formatTime(job.pickupAfter)} and ${formatTime(job.dropoffBefore)} (${formatTime(transferTime)})`);
+        }
+    }
+    console.log('');
+
 
     // Make the dispatcher aware of each of the Jobs on the list, 15 minutes in
     // advance.
@@ -131,9 +150,13 @@ function go() {
     // Kick off the simulation.
     clock.mainloop();
 
-    console.log(`Scheduled: ${transfers.getJobCount()}`);
+    console.log(`Scheduled: ${transfers.getJobCount()} jobs`);
     console.log(`Completed: ${environment.successfulJobs.length}`);
-    console.log(`Failed: ${environment.failedJobs.length}`);
+    const failedJobs = environment.failedJobs.map( (x)=>x.id ).join(',');
+    console.log(`Failed: ${environment.failedJobs.length} jobs`);
+    if (environment.failedJobs.length > 0) {
+        console.log(`  [${failedJobs}]`)
+    }
 
     console.log('Simulation ended.');
 }
@@ -191,6 +214,10 @@ function unloadTimeEstimator(location: LocationId, quantity: number, startTime: 
     return 10 * SECOND * quantity;
 }
 
+function formatTime(time: SimTime) {
+    const x = new Date(time);
+    return x.toISOString().slice(-13,-8);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //

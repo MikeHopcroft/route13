@@ -14,7 +14,7 @@ import { Cart, Job, LocationId } from '../environement';
 ///////////////////////////////////////////////////////////////////////////////
 
 export interface Trace {
-    cartPlanIs(cart: Cart, jobs: Job[]): void;
+    cartPlanIs(cart: Cart, unfiltered: Job[], filtered: Job[]): void;
 
     cartArrives(cart: Cart): void;
     cartPasses(cart: Cart): void;
@@ -104,8 +104,10 @@ export class TextTrace implements Trace {
         return this.colors[cart.id % this.colors.length](text);
     }
 
-    cartPlanIs(cart: Cart, jobs: Job[]) {
-        this.format(cart, `Cart ${cart.id} plan is now [${jobs.map((x) => x.id).join(",")}].`);
+    cartPlanIs(cart: Cart, unfiltered: Job[], filtered: Job[]) {
+        const u = unfiltered.map((x) => x.id).join(",");
+        const f = filtered.map((x) => x.id).join(",");
+        this.format(cart, `Cart ${cart.id} plan [${u}] merges to [${f}].`);
     }
 
     cartDeparts(cart: Cart, destination: LocationId): void {
@@ -171,7 +173,7 @@ export class TextTrace implements Trace {
     }
 
     plannerFinished(): void {
-        this.format(null, `Planning cycle finished.`);
+        this.format(null, `Planning cycle finished. New plan available.`);
     }
 }
 

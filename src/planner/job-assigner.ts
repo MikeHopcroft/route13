@@ -19,10 +19,6 @@ export class JobAssigner implements Planner {
     private readonly maxJobCount: number;
     private readonly routePlanner: RoutePlanner;
 
-    loadTimeEstimator: LoadTimeEstimator;
-    unloadTimeEstimator: UnloadTimeEstimator;
-    transitTimeEstimator: TransitTimeEstimator;
-
     constructor(
         maxJobCount: number,
         loadTimeEstimator: LoadTimeEstimator,
@@ -36,16 +32,13 @@ export class JobAssigner implements Planner {
             unloadTimeEstimator,
             transitTimeEstimator
         );
-
-        this.loadTimeEstimator = loadTimeEstimator;
-        this.unloadTimeEstimator = unloadTimeEstimator;
-        this.transitTimeEstimator = transitTimeEstimator;
     }
 
     createAssignment(
         jobs: IterableIterator<Job>,
         carts: IterableIterator<Cart>,
-        time: SimTime
+        time: SimTime,
+        logger: ((x:string) => void) | null = null
     ): Map<Cart, Assignment> {
         const existingAssignments = new Map<Cart, Job[]>();
         const unassigned: Job[] = [];
@@ -94,9 +87,6 @@ export class JobAssigner implements Planner {
                     // only look at 2-tuples if there were some carts unassigned?
                     for (const combination of combinations(jobCount, unassigned.length)) {
                         const slate = [...assigned, ...(combination.map((n) => unassigned[n]))];
-                        if (slate.length > 3) {
-                            console.log(`slate has length of ${slate.length}`);
-                        }
                         const plan = this.routePlanner.getBestRoute(cart, slate, time);
                         if (plan) {
                             alternatives.push({
@@ -119,7 +109,6 @@ export class JobAssigner implements Planner {
         const assignedJobs: Set<Job> = new Set<Job>();
         const assignedCarts: Set<Cart> = new Set<Cart>();
         for (const alternative of alternatives) {
-            const text = `[${alternative.jobs.map((x) => x.id).join(',')}]`;
             let conflicting = assignedCarts.has(alternative.cart);
             if (!conflicting) {
                 for (const job of alternative.jobs) {
@@ -129,7 +118,6 @@ export class JobAssigner implements Planner {
                     }
                 }
             }
-            // console.log(`${conflicting?"CONFLICTING":"OK"}: ${text} (cart = ${alternative.cart.id}, score = ${alternative.score})`);
             if (!conflicting) {
                 assignedCarts.add(alternative.cart);
                 for (const job of alternative.jobs) {
@@ -139,9 +127,11 @@ export class JobAssigner implements Planner {
             }
         }
 
-        console.log('');
-        console.log(`Searched ${alternatives.length} assignments`);
-        console.log('');
+        if (logger) {
+            logger('');
+            logger(`Searched ${alternatives.length} assignments`);
+            logger('');
+        }
 
         return assignments;
     }

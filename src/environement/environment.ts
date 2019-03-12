@@ -136,6 +136,9 @@ export class Environment {
     // NOTE that updated job will not become visible to Carts until new plan
     // has been merged.
     addJob(job: Job) {
+        if (this.trace) {
+            this.trace.jobIntroduced(job);
+        }
         this.jobs.set(job.id, job);
     }
 

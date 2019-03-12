@@ -52,14 +52,21 @@ export class SimpleDispatcher implements Dispatcher {
     getPlan(cart: Cart): Job[] {
         // Select an unallocated job in FIFO order.
         const job = this.unallocatedJobs.shift() as Job;
+        let jobs: Job[];
         if (job) {
             // Don't actually need to assign job here as Cart will assign to
             // itself when it commits (loads items).
-            return [job];
+            jobs = [job];
         }
         else {
-            return [];
+            jobs = [];
         }
+
+        if (this.trace) {
+            this.trace.cartPlanIs(cart, jobs, jobs);
+        }
+
+        return jobs;
     }
 
     // Makes the dispatcher aware of a Job. Once a Job has been introduced
