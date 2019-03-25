@@ -1,5 +1,5 @@
 import { Agent, Clock, SimTime } from '../core';
-import { Cart, Environment, Job, LocationId, OutOfServiceJobState, Trace, TransferJobState } from '../environement';
+import { Cart, Environment, Job, LocationId, OutOfServiceJobState, Trace, TransferJobState } from '../environment';
 import { ActionType, Action, DropoffAction, PickupAction, SuspendAction } from '../planner';
 
 import { Dispatcher } from './dispatcher';

@@ -1,7 +1,7 @@
 import chalk, { Chalk, ColorSupport } from 'chalk';
 
 import { Clock, SimTime } from '../core';
-import { Cart, Job, LocationId } from '../environement';
+import { Cart, Job, LocationId } from '../environment';
 
 ///////////////////////////////////////////////////////////////////////////////
 //

@@ -2,9 +2,9 @@ import { assert } from 'chai';
 import 'mocha';
 
 import { SimTime } from '../../src/core';
-import { CartFactory, JobFactory, LocationId } from '../../src/environement';
+import { CartFactory, JobFactory, LocationId } from '../../src/environment';
 import { RoutePlanner } from '../../src/planner';
-import { Job } from '../../src/environement';
+import { Job } from '../../src/environment';
 
 function transitTimeEstimator(origin: LocationId, destination: LocationId, startTime: SimTime): SimTime {
     return Math.abs(destination - origin) * 100;

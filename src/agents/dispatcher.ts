@@ -1,5 +1,5 @@
 import { Agent, SimTime } from '../core';
-import { Cart, Job, JobId } from '../environement';
+import { Cart, Job, JobId } from '../environment';
 
 export interface Dispatcher {
     // An agent that waits until the next plan is available.
