@@ -1,5 +1,5 @@
 import { Agent, Clock, Condition, NextStep, SimTime } from '../core';
-import { Cart, Environment, Job, Trace } from '../environement';
+import { Cart, Environment, Job, Trace } from '../environment';
 
 import { Dispatcher } from './dispatcher';
 

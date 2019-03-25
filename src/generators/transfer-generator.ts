@@ -2,7 +2,7 @@ import * as seedrandom from 'seedrandom';
 import { Gaussian } from 'ts-gaussian';
 
 import { Clock, NextStep, SimTime, start } from '../core';
-import { JobFactory, LocationId, TransferJob } from '../environement';
+import { JobFactory, LocationId, TransferJob } from '../environment';
 
 // Unique id for a journey (e.g. flight number, train number, etc.)
 export type JourneyId = number;

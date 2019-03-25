@@ -1,5 +1,5 @@
 import { SimTime } from '../core';
-import { Cart, Job, JobType, LocationId, OutOfServiceJobState, TransferJobState } from '../environement';
+import { Cart, Job, JobType, LocationId, OutOfServiceJobState, TransferJobState } from '../environment';
 import { LoadTimeEstimator, TransitTimeEstimator, UnloadTimeEstimator } from '../estimators';
 import { Action, ActionBase, ActionType, DropoffAction, PickupAction, Route, SuspendAction } from '../planner';
 

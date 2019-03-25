@@ -1,4 +1,4 @@
-import { Cart, CartId, Job, JobId } from '../environement';
+import { Cart, CartId, Job, JobId } from '../environment';
 import { Assignment } from '../planner';
 
 

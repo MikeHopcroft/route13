@@ -1,5 +1,5 @@
 import { SimTime } from '../core';
-import { LocationId } from '../environement';
+import { LocationId } from '../environment';
 
 import { Cart } from './cart';
 

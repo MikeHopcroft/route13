@@ -1,5 +1,5 @@
 import { SimTime } from '../core';
-import { Cart, Job } from '../environement';
+import { Cart, Job } from '../environment';
 import { LoadTimeEstimator, TransitTimeEstimator, UnloadTimeEstimator } from '../estimators';
 
 import { combinations } from './combinations';

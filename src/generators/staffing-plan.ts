@@ -1,5 +1,5 @@
 import { Clock, HOUR, MAX_DATE, MINUTE, MIN_DATE, SECOND, SimTime, start } from "../core";
-import { Cart, CartFactory, JobFactory, LocationId, OutOfServiceJob, Job } from "../environement";
+import { Cart, CartFactory, JobFactory, LocationId, OutOfServiceJob, Job } from "../environment";
 
 // An interval of time.
 // The start time should never exceed the end ime.

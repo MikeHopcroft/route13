@@ -1,4 +1,4 @@
-import { Cart, CartId, Job, JobId } from "../environement";
+import { Cart, CartId, Job, JobId } from "../environment";
 import { LoadTimeEstimator, RouteNextStep, TransitTimeEstimator, UnloadTimeEstimator } from '../estimators';
 import { RoutePlanner } from '../planner';
 import { Trace } from './trace';

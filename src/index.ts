@@ -1,5 +1,5 @@
 export * from './agents';
 export * from './core';
-export * from './environement';
+export * from './environment';
 export * from './generators';
 export * from './planner';

@@ -1,7 +1,7 @@
 import { SimTime } from '../core';
-import { JobId, JobType, LocationId } from '../environement';
-import { OutOfServiceJob, OutOfServiceJobState } from '../environement';
-import { TransferJob, TransferJobState, } from '../environement';
+import { JobId, JobType, LocationId } from '../environment';
+import { OutOfServiceJob, OutOfServiceJobState } from '../environment';
+import { TransferJob, TransferJobState, } from '../environment';
 
 ///////////////////////////////////////////////////////////////////////////////
 //

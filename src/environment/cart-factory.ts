@@ -1,5 +1,5 @@
 
-import { Cart, CartId, LocationId } from '../environement';
+import { Cart, CartId, LocationId } from '../environment';
 
 ///////////////////////////////////////////////////////////////////////////////
 //

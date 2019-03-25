@@ -1,5 +1,5 @@
 import { SimTime } from '../core';
-import { LocationId } from '../environement';
+import { LocationId } from '../environment';
 
 // Returns the estimated time to travel from origin to destination, starting
 // at startTime. Implementations could use a static table of historical travel
