@@ -6,7 +6,7 @@ THIS DOCUMENT IS CURRENTLY A WORK IN PROGRESS
 A `Route13` simulation typically consists of a composition of five components:
 * **`Generators`**, which produce streams of external events that serve as input to the simulation.
 * The **`Clock`**, which is the event queue that drives the simulation.
-* The **`Environement`**, which maintains the current state of the world.
+* The **`Environment`**, which maintains the current state of the world.
 * **`Agents`**, such as the `Driver` and the `Dispatcher`, which perform actions in the Environment.
 * **`Planner`**, which strives to find an optimal ordering of activies for Agents.
 
